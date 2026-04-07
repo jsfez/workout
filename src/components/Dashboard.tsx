@@ -1,15 +1,31 @@
-import { Dumbbell, CheckCircle2, Clock, ChevronRight, Zap } from "lucide-react";
+import {
+  Dumbbell,
+  CheckCircle2,
+  Clock,
+  ChevronRight,
+  Zap,
+  Moon,
+  Sun,
+} from "lucide-react";
 import { sessions } from "@/data/workouts";
 import { startSession } from "@/store/workoutStore";
 import { formatDate } from "@/lib/utils";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import type { WorkoutStore } from "@/types";
 
 interface DashboardProps {
   onSelectSession: (sessionId: string) => void;
+  isDarkMode: boolean;
+  onToggleTheme: () => void;
   store: WorkoutStore;
 }
 
-export function Dashboard({ onSelectSession, store }: DashboardProps) {
+export function Dashboard({
+  onSelectSession,
+  isDarkMode,
+  onToggleTheme,
+  store,
+}: DashboardProps) {
   const completedIds = new Set(
     store.logs.filter((l) => l.completed).map((l) => l.sessionId),
   );
@@ -30,42 +46,60 @@ export function Dashboard({ onSelectSession, store }: DashboardProps) {
     onSelectSession(sessionId);
   }
 
+  const swipeHandlers = useSwipeNavigation({
+    onSwipeLeft: () => nextSession && handleStart(nextSession.id),
+  });
+
   // Group sessions by week
   const weeks = Array.from({ length: 8 }, (_, i) => i + 1);
 
   return (
-    <div className="flex flex-col min-h-svh bg-[#0a0a0f]">
+    <div className="flex min-h-svh flex-col bg-background" {...swipeHandlers}>
       {/* Header */}
       <div className="px-5 pt-12 pb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Dumbbell className="w-5 h-5 text-indigo-400" />
-          <span className="text-xs font-semibold text-indigo-400 uppercase tracking-widest">
-            Workout Tracker
-          </span>
+        <div className="mb-1 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Dumbbell className="h-5 w-5 text-primary-light" />
+            <span className="text-xs font-semibold text-primary-light uppercase tracking-widest">
+              Workout Tracker
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-raised text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
+            aria-label={isDarkMode ? "Activer le mode clair" : "Activer le mode sombre"}
+          >
+            {isDarkMode ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </button>
         </div>
-        <h1 className="text-2xl font-bold text-white mb-1">Mon programme</h1>
-        <p className="text-slate-400 text-sm">8 semaines · 3 séances/semaine</p>
+        <h1 className="mb-1 text-2xl font-bold text-text">Mon programme</h1>
+        <p className="text-sm text-text-muted">
+          8 semaines · 3 séances/semaine
+        </p>
       </div>
 
       {/* Progress bar */}
       <div className="px-5 mb-6">
-        <div className="bg-[#1c1c26] rounded-2xl p-4 border border-[#2a2a38]">
+        <div className="rounded-2xl border border-border bg-surface-raised p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-slate-300">
-              Progression
-            </span>
-            <span className="text-sm font-bold text-indigo-400">
+            <span className="text-sm font-medium text-text">Progression</span>
+            <span className="text-sm font-bold text-primary-light">
               {completedCount}/{totalCount}
             </span>
           </div>
-          <div className="h-2 bg-[#2a2a38] rounded-full overflow-hidden">
+          <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
             <div
-              className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+              className="h-full rounded-full bg-primary transition-all duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
           {lastCompleted && (
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="mt-2 text-xs text-text-subtle">
               Dernière séance : {formatDate(lastCompleted.date)}
             </p>
           )}
@@ -77,20 +111,20 @@ export function Dashboard({ onSelectSession, store }: DashboardProps) {
         <div className="px-5 mb-6">
           <button
             onClick={() => handleStart(nextSession.id)}
-            className="w-full bg-indigo-500 hover:bg-indigo-400 active:scale-[0.98] transition-all rounded-2xl p-5 text-left shadow-lg shadow-indigo-500/25"
+            className="w-full rounded-2xl bg-primary p-5 text-left shadow-lg shadow-primary/25 transition-all hover:bg-primary-light active:scale-[0.98]"
           >
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-1.5 mb-1">
-                  <Zap className="w-4 h-4 text-indigo-200" />
-                  <span className="text-xs font-semibold text-indigo-200 uppercase tracking-wider">
+                  <Zap className="w-4 h-4 text-primary-foreground" />
+                  <span className="text-xs font-semibold text-primary-foreground uppercase tracking-wider">
                     Prochaine séance
                   </span>
                 </div>
                 <p className="text-xl font-bold text-white">
                   {nextSession.label}
                 </p>
-                <p className="text-indigo-200 text-sm mt-0.5">
+                <p className="mt-0.5 text-sm text-primary-foreground">
                   {nextSession.exercises.length} exercices
                 </p>
               </div>
@@ -104,7 +138,7 @@ export function Dashboard({ onSelectSession, store }: DashboardProps) {
 
       {/* Sessions list */}
       <div className="px-5 pb-8 flex-1">
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">
+        <h2 className="mb-4 text-xs font-semibold text-text-subtle uppercase tracking-widest">
           Toutes les séances
         </h2>
 
@@ -113,7 +147,7 @@ export function Dashboard({ onSelectSession, store }: DashboardProps) {
             const weekSessions = sessions.filter((s) => s.week === week);
             return (
               <div key={week}>
-                <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest mb-2">
+                <p className="mb-2 text-xs font-semibold text-text-faint uppercase tracking-widest">
                   Semaine {week}
                 </p>
                 <div className="flex flex-col gap-2">
@@ -132,30 +166,30 @@ export function Dashboard({ onSelectSession, store }: DashboardProps) {
                         onClick={() => handleStart(session.id)}
                         className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all active:scale-[0.98] text-left ${
                           isCompleted
-                            ? "bg-emerald-500/5 border-emerald-500/20"
+                            ? "bg-success/5 border-success/20"
                             : isCurrent
-                              ? "bg-indigo-500/10 border-indigo-500/30"
+                              ? "bg-primary/10 border-primary/30"
                               : isNext
-                                ? "bg-[#1c1c26] border-indigo-500/30"
-                                : "bg-[#1c1c26] border-[#2a2a38]"
+                                ? "bg-surface-raised border-primary/30"
+                                : "bg-surface-raised border-border"
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
                               isCompleted
-                                ? "bg-emerald-500/20"
+                                ? "bg-success/20"
                                 : isCurrent
-                                  ? "bg-indigo-500/20"
-                                  : "bg-[#2a2a38]"
+                                  ? "bg-primary/20"
+                                  : "bg-surface-muted"
                             }`}
                           >
                             {isCompleted ? (
-                              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                              <CheckCircle2 className="w-5 h-5 text-success-foreground" />
                             ) : isCurrent ? (
-                              <Clock className="w-5 h-5 text-indigo-400" />
+                              <Clock className="w-5 h-5 text-primary-light" />
                             ) : (
-                              <span className="text-sm font-bold text-slate-500">
+                              <span className="text-sm font-bold text-text-subtle">
                                 #{session.day}
                               </span>
                             )}
@@ -163,12 +197,12 @@ export function Dashboard({ onSelectSession, store }: DashboardProps) {
                           <div>
                             <p
                               className={`text-sm font-semibold ${
-                                isCompleted ? "text-slate-400" : "text-white"
+                                isCompleted ? "text-text-muted" : "text-text"
                               }`}
                             >
                               {session.label}
                             </p>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-text-subtle">
                               {log?.date
                                 ? formatDate(log.date)
                                 : `${session.exercises.length} exercices`}
@@ -177,7 +211,7 @@ export function Dashboard({ onSelectSession, store }: DashboardProps) {
                         </div>
                         <ChevronRight
                           className={`w-4 h-4 flex-shrink-0 ${
-                            isCompleted ? "text-slate-600" : "text-slate-500"
+                            isCompleted ? "text-text-faint" : "text-text-subtle"
                           }`}
                         />
                       </button>

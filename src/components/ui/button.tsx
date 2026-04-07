@@ -9,12 +9,12 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "bg-indigo-500 text-white hover:bg-indigo-400 shadow-lg shadow-indigo-500/20",
+          "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-light",
         secondary:
-          "bg-[#1c1c26] text-slate-200 border border-[#2a2a38] hover:bg-[#22222e]",
-        ghost: "text-slate-400 hover:text-slate-200 hover:bg-white/5",
-        danger: "bg-red-500/10 text-red-400 border border-red-500/20",
-        success: "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20",
+          "border border-border bg-surface-raised text-text hover:bg-surface-hover",
+        ghost: "text-text-muted hover:bg-white/5 hover:text-text",
+        danger: "border border-danger/20 bg-danger/10 text-danger-foreground",
+        success: "bg-success text-white shadow-lg shadow-success/20",
       },
       size: {
         sm: "h-9 px-4 text-sm",
@@ -30,7 +30,7 @@ const buttonVariants = cva(
   },
 );
 
-export interface ButtonProps
+interface ButtonProps
   extends
     React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
