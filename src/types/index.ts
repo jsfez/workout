@@ -17,7 +17,7 @@ export interface Session {
   exercises: Exercise[];
 }
 
-export interface SessionLog {
+export interface SessionProgressSnapshot {
   sessionId: string;
   date: string; // ISO date string
   loads: Record<string, string>; // exerciseName -> load used
@@ -25,7 +25,7 @@ export interface SessionLog {
   completed: boolean;
 }
 
-export interface WorkoutStore {
-  logs: SessionLog[];
+export interface WorkoutProgress {
+  sessions: SessionProgressSnapshot[];
   currentSessionId: string | null;
 }

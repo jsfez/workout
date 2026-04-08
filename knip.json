@@ -1,5 +1,17 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "api/**/*.ts"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "api/**/*.ts",
+    "prisma/**/*.ts",
+    "*.config.{ts,js}"
+  ],
+  "ignoreDependencies": [
+    "@prisma/client"
+  ],
   "tags": [
     "-lintignore"
   ]

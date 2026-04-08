@@ -1,0 +1,91 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../generated/prisma"
+  importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Program {
+  id       String    @id @default(cuid())
+  slug     String    @unique
+  name     String
+  sessions Session[]
+}
+
+model Session {
+  id            String            @id @default(cuid())
+  sourceId      String            @unique
+  label         String
+  week          Int
+  day           Int
+  programId     String
+  program       Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exercises     SessionExercise[]
+  progress      SessionProgress?
+  activeInState WorkoutState[]    @relation("CurrentSession")
+
+  @@unique([programId, week, day])
+  @@index([week, day])
+}
+
+model Exercise {
+  id       String            @id @default(cuid())
+  name     String            @unique
+  maxLoad  Decimal           @default(0) @db.Decimal(6, 2)
+  sessions SessionExercise[]
+}
+
+model SessionExercise {
+  id          String            @id @default(cuid())
+  sessionId   String
+  exerciseId  String
+  position    Int
+  sets        Int
+  reps        String
+  rpe         Decimal           @db.Decimal(3, 1)
+  rest        String
+  programLoad Decimal?          @db.Decimal(6, 2)
+  notes       String
+  session     Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exercise    Exercise          @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  progress    ExerciseProgress?
+
+  @@unique([sessionId, position])
+  @@unique([sessionId, exerciseId])
+  @@index([exerciseId])
+}
+
+model WorkoutState {
+  id               String   @id
+  currentSessionId String?
+  currentSession   Session? @relation("CurrentSession", fields: [currentSessionId], references: [id], onDelete: SetNull)
+  updatedAt        DateTime @updatedAt
+}
+
+model SessionProgress {
+  sessionId   String             @id
+  startedAt   DateTime           @default(now())
+  completed   Boolean            @default(false)
+  completedAt DateTime?
+  updatedAt   DateTime           @updatedAt
+  session     Session            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exercises   ExerciseProgress[]
+
+  @@index([completed])
+}
+
+model ExerciseProgress {
+  sessionExerciseId String          @id
+  sessionProgressId String
+  load              Decimal?        @db.Decimal(6, 2)
+  completed         Boolean         @default(false)
+  completedAt       DateTime?
+  updatedAt         DateTime        @updatedAt
+  sessionExercise   SessionExercise @relation(fields: [sessionExerciseId], references: [id], onDelete: Cascade)
+  sessionProgress   SessionProgress @relation(fields: [sessionProgressId], references: [sessionId], onDelete: Cascade)
+
+  @@index([sessionProgressId])
+}

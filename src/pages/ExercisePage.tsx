@@ -1,11 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sessions } from "@/data/workouts";
-import {
-  getLastLoadForExercise,
-  setExerciseCompleted,
-  updateLoad,
-} from "@/store/workoutStore";
+import { getLastLoadForExercise } from "@/api/workoutProgress";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { BackButton } from "@/components/BackButton";
 import { Heading } from "@/components/Heading";
-import type { Exercise, WorkoutStore } from "@/types";
+import type { Exercise, WorkoutProgress } from "@/types";
 import { Page } from "@/components/Page";
 import { PageHeader } from "@/components/PageHeader";
 import { ColoredEmphase } from "@/components/ColoredEmphase";
@@ -40,8 +36,17 @@ interface ExerciseViewProps {
   exerciseIndex: number;
   onBack: () => void;
   onSelectExercise: (exerciseIndex: number) => void;
-  store: WorkoutStore;
-  onStoreChange: () => void;
+  progress: WorkoutProgress;
+  onUpdateLoad: (
+    sessionId: string,
+    exerciseName: string,
+    load: string,
+  ) => Promise<void>;
+  onSetExerciseCompleted: (
+    sessionId: string,
+    exerciseName: string,
+    completed: boolean,
+  ) => Promise<void>;
 }
 
 const BASE_LOAD_OPTIONS = Array.from({ length: 81 }, (_, index) =>
@@ -200,19 +205,23 @@ export const ExerciseView = ({
   exerciseIndex,
   onBack,
   onSelectExercise,
-  store,
-  onStoreChange,
+  progress,
+  onUpdateLoad,
+  onSetExerciseCompleted,
 }: ExerciseViewProps) => {
   const session = sessions.find((s) => s.id === sessionId)!;
   const selectedExercise =
     session.exercises[exerciseIndex] ?? session.exercises[0];
-  const log = store.logs.find((l) => l.sessionId === sessionId);
+  const sessionProgress = progress.sessions.find(
+    (item) => item.sessionId === sessionId,
+  );
   const allSessionIds = sessions.map((s) => s.id);
-  const savedLoad = log?.loads[selectedExercise.name] ?? "";
-  const completedExercises = log?.completedExercises ?? {};
+  const savedLoad = sessionProgress?.loads[selectedExercise.name] ?? "";
+  const completedExercises = sessionProgress?.completedExercises ?? {};
   const isExerciseCompleted =
     completedExercises[selectedExercise.name] ?? false;
   const lastLoad = getLastLoadForExercise(
+    progress,
     selectedExercise.name,
     sessionId,
     allSessionIds,
@@ -244,23 +253,16 @@ export const ExerciseView = ({
     selectedExercise.programLoad,
   ]);
 
-  function saveLoad() {
-    updateLoad(sessionId, selectedExercise.name, loadInput);
-    onStoreChange();
+  async function saveLoad() {
+    await onUpdateLoad(sessionId, selectedExercise.name, loadInput);
   }
 
-  function handleCompletedChange(checked: boolean) {
-    setExerciseCompleted(
-      sessionId,
-      selectedExercise.name,
-      checked,
-      session.exercises.map((exercise) => exercise.name),
-    );
-    onStoreChange();
+  async function handleCompletedChange(checked: boolean) {
+    await onSetExerciseCompleted(sessionId, selectedExercise.name, checked);
   }
 
   function goToExercise(index: number) {
-    saveLoad();
+    void saveLoad();
     onSelectExercise(index);
   }
 
@@ -291,7 +293,7 @@ export const ExerciseView = ({
     if (nextIndex !== null) {
       goToExercise(nextIndex);
     } else {
-      saveLoad();
+      void saveLoad();
       onBack();
     }
   };
@@ -311,7 +313,7 @@ export const ExerciseView = ({
 
           <CompletedSwitch
             checked={isExerciseCompleted}
-            onCheckedChange={handleCompletedChange}
+            onCheckedChange={(checked) => void handleCompletedChange(checked)}
           />
         </div>
 

@@ -1,6 +1,5 @@
 import { Dumbbell } from "lucide-react";
 import { sessions } from "@/data/workouts";
-import { startSession } from "@/store/workoutStore";
 import { formatDate } from "@/lib/utils";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 
@@ -8,7 +7,7 @@ import { Heading } from "@/components/Heading";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Subtitle } from "@/components/Subtitle";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import type { WorkoutStore } from "@/types";
+import type { WorkoutProgress } from "@/types";
 import { ProgressSummary } from "@/components/ProgressSummary";
 import { SessionCard, type SessionCardStatus } from "@/components/SessionCard";
 import { NextSessionCard } from "@/components/NextSessionCard";
@@ -19,7 +18,7 @@ interface DashboardProps {
   onSelectSession: (sessionId: string) => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
-  store: WorkoutStore;
+  progress: WorkoutProgress;
 }
 
 function getSessionStatus(
@@ -47,14 +46,16 @@ export const Dashboard = ({
   onSelectSession,
   isDarkMode,
   onToggleTheme,
-  store,
+  progress,
 }: DashboardProps) => {
   const completedIds = new Set(
-    store.logs.filter((l) => l.completed).map((l) => l.sessionId),
+    progress.sessions
+      .filter((item) => item.completed)
+      .map((item) => item.sessionId),
   );
 
-  const lastCompleted = store.logs
-    .filter((l) => l.completed)
+  const lastCompleted = progress.sessions
+    .filter((item) => item.completed)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
   const nextIdx = sessions.findIndex((s) => !completedIds.has(s.id));
@@ -65,12 +66,13 @@ export const Dashboard = ({
   const progressPct = Math.round((completedCount / totalCount) * 100);
 
   function handleStart(sessionId: string) {
-    startSession(sessionId);
     onSelectSession(sessionId);
   }
 
   const swipeHandlers = useSwipeNavigation({
-    onSwipeLeft: () => nextSession && handleStart(nextSession.id),
+    onSwipeLeft: () => {
+      if (nextSession) handleStart(nextSession.id);
+    },
   });
 
   // Group sessions by week
@@ -116,13 +118,13 @@ export const Dashboard = ({
 
                 <div className="flex flex-col gap-2">
                   {weekSessions.map((session) => {
-                    const log = store.logs.find(
+                    const sessionProgress = progress.sessions.find(
                       (item) => item.sessionId === session.id,
                     );
                     const status = getSessionStatus(
                       session.id,
                       completedIds,
-                      store.currentSessionId,
+                      progress.currentSessionId,
                       nextSession?.id,
                     );
 
@@ -132,8 +134,8 @@ export const Dashboard = ({
                         day={session.day}
                         label={session.label}
                         meta={
-                          log?.date
-                            ? formatDate(log.date)
+                          sessionProgress?.date
+                            ? formatDate(sessionProgress.date)
                             : `${session.exercises.length} exercices`
                         }
                         status={status}

@@ -1,14 +1,11 @@
 import { sessions } from "@/data/workouts";
-import {
-  getLastLoadForExercise,
-  setSessionCompleted,
-} from "@/store/workoutStore";
+import { getLastLoadForExercise } from "@/api/workoutProgress";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { Progress } from "@/components/ui/progress";
 import { BackButton } from "@/components/BackButton";
 import { Heading } from "@/components/Heading";
 import { Subtitle } from "@/components/Subtitle";
-import type { WorkoutStore } from "@/types";
+import type { WorkoutProgress } from "@/types";
 import { ExerciseCard } from "@/components/ExerciceCard";
 import { FixedPageHeader } from "@/components/PageHeader";
 import { Page } from "@/components/Page";
@@ -18,8 +15,11 @@ interface SessionViewProps {
   sessionId: string;
   onBack: () => void;
   onSelectExercise: (exerciseIndex: number) => void;
-  store: WorkoutStore;
-  onStoreChange: () => void;
+  progress: WorkoutProgress;
+  onSetSessionCompleted: (
+    sessionId: string,
+    completed: boolean,
+  ) => Promise<void>;
 }
 
 const SessionProgress = ({
@@ -46,18 +46,19 @@ export const SessionView = ({
   sessionId,
   onBack,
   onSelectExercise,
-  store,
-  onStoreChange,
+  progress,
+  onSetSessionCompleted,
 }: SessionViewProps) => {
   const session = sessions.find((s) => s.id === sessionId)!;
-  const log = store.logs.find((l) => l.sessionId === sessionId);
-  const isCompleted = log?.completed ?? false;
+  const sessionProgress = progress.sessions.find(
+    (item) => item.sessionId === sessionId,
+  );
+  const isCompleted = sessionProgress?.completed ?? false;
   const allSessionIds = sessions.map((s) => s.id);
-  const completedExerciseMap = log?.completedExercises ?? {};
+  const completedExerciseMap = sessionProgress?.completedExercises ?? {};
 
-  function handleSessionCompletedChange(checked: boolean) {
-    setSessionCompleted(sessionId, checked);
-    onStoreChange();
+  async function handleSessionCompletedChange(checked: boolean) {
+    await onSetSessionCompleted(sessionId, checked);
   }
 
   const completedExercises = session.exercises.filter(
@@ -85,7 +86,9 @@ export const SessionView = ({
           </div>
           <CompletedSwitch
             checked={isCompleted}
-            onCheckedChange={handleSessionCompletedChange}
+            onCheckedChange={(checked) =>
+              void handleSessionCompletedChange(checked)
+            }
           />
         </div>
         {!isCompleted && (
@@ -104,6 +107,7 @@ export const SessionView = ({
             index={index}
             isComplete={completedExerciseMap[exercise.name] ?? false}
             lastLoad={getLastLoadForExercise(
+              progress,
               exercise.name,
               sessionId,
               allSessionIds,
