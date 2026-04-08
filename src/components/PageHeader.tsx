@@ -4,7 +4,13 @@ import { cn } from "@/lib/utils";
 type PageHeaderProps = React.HTMLAttributes<HTMLDivElement>;
 
 export const PageHeader = ({ className, ...props }: PageHeaderProps) => {
-  return <div className={cn("pt-6", className)} {...props} />;
+  return (
+    <div
+      className={cn("pt-6", className)}
+      style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}
+      {...props}
+    />
+  );
 };
 
 export const FixedPageHeader = ({
@@ -12,12 +18,44 @@ export const FixedPageHeader = ({
   children,
   ...props
 }: PageHeaderProps) => {
+  const innerRef = React.useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = React.useState(0);
+
+  React.useLayoutEffect(() => {
+    const element = innerRef.current;
+
+    if (!element) return;
+
+    const updateHeight = () => {
+      setHeaderHeight(element.getBoundingClientRect().height);
+    };
+
+    updateHeight();
+
+    const resizeObserver = new ResizeObserver(updateHeight);
+    resizeObserver.observe(element);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
   return (
-    <div
-      className={cn("fixed top-0 left-0 right-0 bg-background z-20", className)}
-      {...props}
-    >
-      <div className="mx-auto max-w-md pt-6 pb-4 px-5">{children}</div>
-    </div>
+    <>
+      <div
+        aria-hidden="true"
+        style={{ height: headerHeight }}
+      />
+      <div
+        className={cn("fixed inset-x-0 top-0 z-30 bg-background", className)}
+        {...props}
+      >
+        <div
+          ref={innerRef}
+          className="mx-auto max-w-md px-5 pb-4 pt-6"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}
+        >
+          {children}
+        </div>
+      </div>
+    </>
   );
 };

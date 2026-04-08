@@ -79,7 +79,7 @@ export const Dashboard = ({
   const weeks = Array.from({ length: 8 }, (_, i) => i + 1);
 
   return (
-    <Page {...swipeHandlers}>
+    <>
       <FixedPageHeader>
         <div className="mb-1 flex items-center justify-between gap-4">
           <Brand />
@@ -89,66 +89,67 @@ export const Dashboard = ({
         <Subtitle>8 semaines · 3 séances/semaine</Subtitle>
       </FixedPageHeader>
 
-      <ProgressSummary
-        completedCount={completedCount}
-        totalCount={totalCount}
-        progressPct={progressPct}
-        lastCompletedLabel={
-          lastCompleted ? formatDate(lastCompleted.date) : undefined
-        }
-        className="mt-36"
-      />
+      <Page {...swipeHandlers}>
+        <ProgressSummary
+          completedCount={completedCount}
+          totalCount={totalCount}
+          progressPct={progressPct}
+          lastCompletedLabel={
+            lastCompleted ? formatDate(lastCompleted.date) : undefined
+          }
+        />
 
-      {nextSession && (
-        <NextSessionCard session={nextSession} onStart={handleStart} />
-      )}
+        {nextSession && (
+          <NextSessionCard session={nextSession} onStart={handleStart} />
+        )}
 
-      <div className="pb-8 flex-1">
-        <SectionHeading className="mb-4">Toutes les séances</SectionHeading>
+        <div className="pb-8 flex-1">
+          <SectionHeading className="mb-3">Toutes les séances</SectionHeading>
 
-        <div className="flex flex-col gap-3">
-          {weeks.map((week) => {
-            const weekSessions = sessions.filter((s) => s.week === week);
+          <div className="flex flex-col gap-6">
+            {weeks.map((week) => {
+              const weekSessions = sessions.filter((s) => s.week === week);
 
-            return (
-              <div key={week}>
-                <p className="mb-2 text-xs font-semibold text-text-faint uppercase tracking-widest">
-                  Semaine {week}
-                </p>
+              return (
+                <div key={week}>
+                  <p className="mb-2 text-xs font-semibold text-text-faint uppercase tracking-widest">
+                    Semaine {week}
+                  </p>
 
-                <div className="flex flex-col gap-2">
-                  {weekSessions.map((session) => {
-                    const sessionProgress = progress.sessions.find(
-                      (item) => item.sessionId === session.id,
-                    );
-                    const status = getSessionStatus(
-                      session.id,
-                      completedIds,
-                      progress.currentSessionId,
-                      nextSession?.id,
-                    );
+                  <div className="flex flex-col gap-2">
+                    {weekSessions.map((session) => {
+                      const sessionProgress = progress.sessions.find(
+                        (item) => item.sessionId === session.id,
+                      );
+                      const status = getSessionStatus(
+                        session.id,
+                        completedIds,
+                        progress.currentSessionId,
+                        nextSession?.id,
+                      );
 
-                    return (
-                      <SessionCard
-                        key={session.id}
-                        day={session.day}
-                        label={session.label}
-                        meta={
-                          sessionProgress?.date
-                            ? formatDate(sessionProgress.date)
-                            : `${session.exercises.length} exercices`
-                        }
-                        status={status}
-                        onClick={() => handleStart(session.id)}
-                      />
-                    );
-                  })}
+                      return (
+                        <SessionCard
+                          key={session.id}
+                          day={session.day}
+                          label={session.label}
+                          meta={
+                            sessionProgress?.date
+                              ? formatDate(sessionProgress.date)
+                              : `${session.exercises.length} exercices`
+                          }
+                          status={status}
+                          onClick={() => handleStart(session.id)}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </Page>
+      </Page>
+    </>
   );
 };

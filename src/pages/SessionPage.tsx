@@ -99,7 +99,7 @@ export const SessionView = ({
         )}
       </FixedPageHeader>
 
-      <div className="flex flex-col gap-2.5 pb-8 mt-44">
+      <div className="flex flex-col gap-2.5 pb-8">
         {session.exercises.map((exercise, index) => (
           <ExerciseCard
             key={index}

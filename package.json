@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "vercel dev",
+    "dev:vite": "vite",
     "build": "prisma generate && tsc -b && vite build",
     "lint": "eslint .",
     "check-types": "tsc --noEmit",
