@@ -1,15 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
-import { Dashboard } from "@/components/Dashboard";
-import { ExerciseView } from "@/components/ExerciseView";
-import { SessionView } from "@/components/SessionView";
+import { Dashboard } from "@/pages/DashboardPage";
+import { ExerciseView } from "@/pages/ExercisePage";
+import { SessionView } from "@/pages/SessionPage";
 import { getStore } from "./store/workoutStore";
 import type { WorkoutStore } from "@/types";
 
-export default function App() {
+const App = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState<number | null>(
-    null,
-  );
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState<
+    number | null
+  >(null);
   const [store, setStore] = useState<WorkoutStore>(() => getStore());
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const storedTheme = localStorage.getItem("workout-theme");
@@ -77,4 +77,6 @@ export default function App() {
       store={store}
     />
   );
-}
+};
+
+export default App;
