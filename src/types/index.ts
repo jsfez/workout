@@ -21,6 +21,7 @@ export interface SessionLog {
   sessionId: string;
   date: string; // ISO date string
   loads: Record<string, string>; // exerciseName -> load used
+  completedExercises: Record<string, boolean>; // exerciseName -> completed
   completed: boolean;
 }
 

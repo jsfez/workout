@@ -49,16 +49,15 @@ const Badges = ({ children }: { children: React.ReactNode }) => {
 export const ExerciseCard = ({
   exercise,
   index,
-  currentLoad,
+  isComplete,
   onClick,
 }: {
   exercise: Exercise;
   index: number;
-  currentLoad?: string;
+  isComplete: boolean;
   lastLoad: string | null;
   onClick: () => void;
 }) => {
-  const isComplete = currentLoad !== undefined && currentLoad !== "";
   const state = isComplete ? "complete" : "default";
 
   return (

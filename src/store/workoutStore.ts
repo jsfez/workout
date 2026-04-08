@@ -12,6 +12,29 @@ function saveStore(store: WorkoutStore): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 }
 
+function createLog(sessionId: string): SessionLog {
+  return {
+    sessionId,
+    date: new Date().toISOString(),
+    loads: {},
+    completedExercises: {},
+    completed: false,
+  };
+}
+
+function getOrCreateLog(store: WorkoutStore, sessionId: string): SessionLog {
+  let log = store.logs.find((l) => l.sessionId === sessionId);
+
+  if (!log) {
+    log = createLog(sessionId);
+    store.logs.push(log);
+  }
+
+  log.completedExercises ??= {};
+
+  return log;
+}
+
 export function getStore(): WorkoutStore {
   return loadStore();
 }
@@ -23,15 +46,7 @@ export function getLog(sessionId: string): SessionLog | undefined {
 export function startSession(sessionId: string): void {
   const store = loadStore();
   store.currentSessionId = sessionId;
-  // Create log if it doesn't exist
-  if (!store.logs.find((l) => l.sessionId === sessionId)) {
-    store.logs.push({
-      sessionId,
-      date: new Date().toISOString(),
-      loads: {},
-      completed: false,
-    });
-  }
+  getOrCreateLog(store, sessionId);
   saveStore(store);
 }
 
@@ -41,26 +56,44 @@ export function updateLoad(
   load: string,
 ): void {
   const store = loadStore();
-  let log = store.logs.find((l) => l.sessionId === sessionId);
-  if (!log) {
-    log = {
-      sessionId,
-      date: new Date().toISOString(),
-      loads: {},
-      completed: false,
-    };
-    store.logs.push(log);
-  }
+  const log = getOrCreateLog(store, sessionId);
   log.loads[exerciseName] = load;
+  saveStore(store);
+}
+
+export function setExerciseCompleted(
+  sessionId: string,
+  exerciseName: string,
+  completed: boolean,
+  exerciseNames: string[],
+): void {
+  const store = loadStore();
+  const log = getOrCreateLog(store, sessionId);
+  log.completedExercises[exerciseName] = completed;
+
+  if (exerciseNames.every((name) => log.completedExercises[name])) {
+    log.completed = true;
+  } else if (!completed) {
+    log.completed = false;
+  }
+
+  saveStore(store);
+}
+
+export function setSessionCompleted(
+  sessionId: string,
+  completed: boolean,
+): void {
+  const store = loadStore();
+  const log = getOrCreateLog(store, sessionId);
+  log.completed = completed;
   saveStore(store);
 }
 
 export function completeSession(sessionId: string): void {
   const store = loadStore();
-  const log = store.logs.find((l) => l.sessionId === sessionId);
-  if (log) {
-    log.completed = true;
-  }
+  const log = getOrCreateLog(store, sessionId);
+  log.completed = true;
   store.currentSessionId = null;
   saveStore(store);
 }

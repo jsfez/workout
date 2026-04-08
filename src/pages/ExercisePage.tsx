@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sessions } from "@/data/workouts";
-import { getLastLoadForExercise, updateLoad } from "@/store/workoutStore";
+import {
+  getLastLoadForExercise,
+  setExerciseCompleted,
+  updateLoad,
+} from "@/store/workoutStore";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,7 +24,6 @@ import { Page } from "@/components/Page";
 import { PageHeader } from "@/components/PageHeader";
 import { ColoredEmphase } from "@/components/ColoredEmphase";
 import { Label } from "@/components/ui/label";
-import { Switch } from "../components/ui/switch";
 import {
   Card,
   CardDescription,
@@ -28,6 +31,7 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { PageFooter } from "../components/PageFooter";
+import { CompletedSwitch } from "../components/CompletedSwitch";
 
 interface ExerciseViewProps {
   sessionId: string;
@@ -160,6 +164,8 @@ export const ExerciseView = ({
   const log = store.logs.find((l) => l.sessionId === sessionId);
   const allSessionIds = sessions.map((s) => s.id);
   const savedLoad = log?.loads[selectedExercise.name] ?? "";
+  const isExerciseCompleted =
+    log?.completedExercises?.[selectedExercise.name] ?? false;
   const lastLoad = getLastLoadForExercise(
     selectedExercise.name,
     sessionId,
@@ -194,6 +200,16 @@ export const ExerciseView = ({
 
   function saveLoad() {
     updateLoad(sessionId, selectedExercise.name, loadInput);
+    onStoreChange();
+  }
+
+  function handleCompletedChange(checked: boolean) {
+    setExerciseCompleted(
+      sessionId,
+      selectedExercise.name,
+      checked,
+      session.exercises.map((exercise) => exercise.name),
+    );
     onStoreChange();
   }
 
@@ -247,10 +263,10 @@ export const ExerciseView = ({
             <Heading>{selectedExercise.name}</Heading>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Switch id="exercice-completed" />
-            <Label htmlFor="exercice-completed">Completed</Label>
-          </div>
+          <CompletedSwitch
+            checked={isExerciseCompleted}
+            onCheckedChange={handleCompletedChange}
+          />
         </div>
 
         <div className="flex gap-2">

@@ -1,19 +1,19 @@
-import { CheckCircle2 } from "lucide-react";
 import { sessions } from "@/data/workouts";
-import { completeSession, getLastLoadForExercise } from "@/store/workoutStore";
+import {
+  completeSession,
+  getLastLoadForExercise,
+  setSessionCompleted,
+} from "@/store/workoutStore";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { BackButton } from "@/components/BackButton";
 import { Heading } from "@/components/Heading";
 import { Subtitle } from "@/components/Subtitle";
 import type { WorkoutStore } from "@/types";
 import { ExerciseCard } from "../components/ExerciceCard";
-import { FixedPageHeader, PageHeader } from "../components/PageHeader";
+import { FixedPageHeader } from "../components/PageHeader";
 import { Page } from "../components/Page";
-import { PageFooter } from "../components/PageFooter";
-import { Container } from "../components/Container";
+import { CompletedSwitch } from "../components/CompletedSwitch";
 
 interface SessionViewProps {
   sessionId: string;
@@ -43,13 +43,6 @@ const SessionProgress = ({
   );
 };
 
-const CompletedBadge = () => (
-  <Badge variant="success" className="flex items-center gap-1">
-    <CheckCircle2 className="w-4 h-4" />
-    Terminée
-  </Badge>
-);
-
 export const SessionView = ({
   sessionId,
   onBack,
@@ -61,7 +54,7 @@ export const SessionView = ({
   const log = store.logs.find((l) => l.sessionId === sessionId);
   const isCompleted = log?.completed ?? false;
   const allSessionIds = sessions.map((s) => s.id);
-  const savedLoads = log?.loads ?? {};
+  const completedExerciseMap = log?.completedExercises ?? {};
 
   function handleComplete() {
     completeSession(sessionId);
@@ -69,12 +62,17 @@ export const SessionView = ({
     onBack();
   }
 
+  function handleSessionCompletedChange(checked: boolean) {
+    setSessionCompleted(sessionId, checked);
+    onStoreChange();
+  }
+
   const completedExercises = session.exercises.filter(
-    (ex) => savedLoads[ex.name] !== undefined && savedLoads[ex.name] !== "",
+    (ex) => completedExerciseMap[ex.name],
   ).length;
 
   const firstIncompleteIndex = session.exercises.findIndex(
-    (ex) => savedLoads[ex.name] === undefined || savedLoads[ex.name] === "",
+    (ex) => !completedExerciseMap[ex.name],
   );
 
   const swipeHandlers = useSwipeNavigation({
@@ -87,12 +85,15 @@ export const SessionView = ({
     <Page {...swipeHandlers}>
       <FixedPageHeader>
         <BackButton label="Retour" onClick={onBack} />
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <Heading>{session.label}</Heading>
             <Subtitle>{session.exercises.length} exercices</Subtitle>
           </div>
-          {isCompleted && <CompletedBadge />}
+          <CompletedSwitch
+            checked={isCompleted}
+            onCheckedChange={handleSessionCompletedChange}
+          />
         </div>
         {!isCompleted && (
           <SessionProgress
@@ -102,13 +103,13 @@ export const SessionView = ({
         )}
       </FixedPageHeader>
 
-      <div className="flex flex-col gap-2.5 pb-32 mt-44">
+      <div className="flex flex-col gap-2.5 pb-8 mt-44">
         {session.exercises.map((exercise, index) => (
           <ExerciseCard
             key={index}
             exercise={exercise}
             index={index}
-            currentLoad={savedLoads[exercise.name]}
+            isComplete={completedExerciseMap[exercise.name] ?? false}
             lastLoad={getLastLoadForExercise(
               exercise.name,
               sessionId,
@@ -118,23 +119,6 @@ export const SessionView = ({
           />
         ))}
       </div>
-
-      {!isCompleted && (
-        <PageFooter>
-          <Container className="mx-auto">
-            <Button
-              variant="success"
-              size="lg"
-              className="w-full"
-              onClick={handleComplete}
-              disabled={completedExercises === 0}
-            >
-              <CheckCircle2 className="w-5 h-5 mr-2" />
-              Terminer la séance
-            </Button>
-          </Container>
-        </PageFooter>
-      )}
     </Page>
   );
 };

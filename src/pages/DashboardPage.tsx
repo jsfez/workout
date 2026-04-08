@@ -1,4 +1,4 @@
-import { Container, Dumbbell } from "lucide-react";
+import { Dumbbell } from "lucide-react";
 import { sessions } from "@/data/workouts";
 import { startSession } from "@/store/workoutStore";
 import { formatDate } from "@/lib/utils";
@@ -12,7 +12,7 @@ import type { WorkoutStore } from "@/types";
 import { ProgressSummary } from "../components/ProgressSummary";
 import { SessionCard, type SessionCardStatus } from "../components/SessionCard";
 import { NextSessionCard } from "../components/NextSessionCard";
-import { FixedPageHeader, PageHeader } from "../components/PageHeader";
+import { FixedPageHeader } from "../components/PageHeader";
 import { Page } from "../components/Page";
 
 interface DashboardProps {
