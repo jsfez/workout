@@ -8,6 +8,7 @@ import {
   setExerciseCompleted,
   setSessionCompleted,
   startSession,
+  updateCompletedSets,
   updateLoad,
 } from "./api/workoutProgress";
 import type { WorkoutProgress } from "@/types";
@@ -80,6 +81,7 @@ function updateSessionProgress(
     sessionId,
     date: nowIso(),
     loads: {},
+    completedSets: {},
     completedExercises: {},
     completed: false,
   };
@@ -173,6 +175,22 @@ const App = () => {
     [mutateProgress],
   );
 
+  const handleUpdateCompletedSets = useCallback(
+    (sessionId: string, exerciseName: string, completedSets: number) =>
+      mutateProgress(
+        (current) =>
+          updateSessionProgress(current, sessionId, (sessionProgress) => ({
+            ...sessionProgress,
+            completedSets: {
+              ...sessionProgress.completedSets,
+              [exerciseName]: completedSets,
+            },
+          })),
+        () => updateCompletedSets(sessionId, exerciseName, completedSets),
+      ),
+    [mutateProgress],
+  );
+
   const handleSetExerciseCompleted = useCallback(
     (sessionId: string, exerciseName: string, completed: boolean) =>
       mutateProgress(
@@ -256,6 +274,7 @@ const App = () => {
         }}
         progress={progress}
         onUpdateLoad={handleUpdateLoad}
+        onUpdateCompletedSets={handleUpdateCompletedSets}
         onSetExerciseCompleted={handleSetExerciseCompleted}
       />
     );

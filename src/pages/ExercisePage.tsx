@@ -42,6 +42,11 @@ interface ExerciseViewProps {
     exerciseName: string,
     load: string,
   ) => Promise<void>;
+  onUpdateCompletedSets: (
+    sessionId: string,
+    exerciseName: string,
+    completedSets: number,
+  ) => Promise<void>;
   onSetExerciseCompleted: (
     sessionId: string,
     exerciseName: string,
@@ -76,11 +81,33 @@ const StatCardValue = ({
   <p className={cn("text-xl font-bold text-text", className)}>{children}</p>
 );
 
+const statCardClassName = "rounded-xl bg-surface-raised p-3 text-center flex-1";
+
 const StatCard = ({ children }: { children: React.ReactNode }) => {
+  return <div className={statCardClassName}>{children}</div>;
+};
+
+const StatCardButton = ({
+  children,
+  onClick,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  ariaLabel: string;
+}) => {
   return (
-    <div className="rounded-xl bg-surface-raised p-3 text-center flex-1">
+    <button
+      type="button"
+      className={cn(
+        statCardClassName,
+        "transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+      )}
+      onClick={onClick}
+      aria-label={ariaLabel}
+    >
       {children}
-    </div>
+    </button>
   );
 };
 
@@ -207,6 +234,7 @@ export const ExerciseView = ({
   onSelectExercise,
   progress,
   onUpdateLoad,
+  onUpdateCompletedSets,
   onSetExerciseCompleted,
 }: ExerciseViewProps) => {
   const session = sessions.find((s) => s.id === sessionId)!;
@@ -217,6 +245,8 @@ export const ExerciseView = ({
   );
   const allSessionIds = sessions.map((s) => s.id);
   const savedLoad = sessionProgress?.loads[selectedExercise.name] ?? "";
+  const completedSets =
+    sessionProgress?.completedSets[selectedExercise.name] ?? 0;
   const completedExercises = sessionProgress?.completedExercises ?? {};
   const isExerciseCompleted =
     completedExercises[selectedExercise.name] ?? false;
@@ -259,6 +289,17 @@ export const ExerciseView = ({
 
   async function handleCompletedChange(checked: boolean) {
     await onSetExerciseCompleted(sessionId, selectedExercise.name, checked);
+  }
+
+  function handleCompletedSetsClick() {
+    const nextCompletedSets =
+      completedSets < selectedExercise.sets ? completedSets + 1 : 0;
+
+    void onUpdateCompletedSets(
+      sessionId,
+      selectedExercise.name,
+      nextCompletedSets,
+    );
   }
 
   function goToExercise(index: number) {
@@ -317,11 +358,14 @@ export const ExerciseView = ({
           />
         </div>
 
-        <div className="flex gap-2">
-          <StatCard>
-            <StatCardValue>{`${selectedExercise.sets}×${selectedExercise.reps}`}</StatCardValue>
-            <StatCardLabel>Séries × Reps</StatCardLabel>
-          </StatCard>
+        <div className="grid grid-cols-2 gap-2">
+          <StatCardButton
+            onClick={handleCompletedSetsClick}
+            ariaLabel={`Modifier les séries effectuées pour ${selectedExercise.name}`}
+          >
+            <StatCardValue>{`${completedSets}/${selectedExercise.sets}`}</StatCardValue>
+            <StatCardLabel>{`${selectedExercise.reps} reps × ${selectedExercise.sets}`}</StatCardLabel>
+          </StatCardButton>
           <StatCard>
             <StatCardValue className="text-success-foreground">
               {selectedExercise.rpe}
@@ -333,6 +377,12 @@ export const ExerciseView = ({
               {selectedExercise.rest.replace(" min", "")}
             </StatCardValue>
             <StatCardLabel>Repos (min)</StatCardLabel>
+          </StatCard>
+          <StatCard>
+            <StatCardValue className="text-primary">
+              {lastLoad ? `${lastLoad} kg` : "-"}
+            </StatCardValue>
+            <StatCardLabel>Dernière charge</StatCardLabel>
           </StatCard>
         </div>
       </PageHeader>

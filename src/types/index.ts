@@ -21,6 +21,7 @@ export interface SessionProgressSnapshot {
   sessionId: string;
   date: string; // ISO date string
   loads: Record<string, string>; // exerciseName -> load used
+  completedSets: Record<string, number>; // exerciseName -> completed sets
   completedExercises: Record<string, boolean>; // exerciseName -> completed
   completed: boolean;
 }

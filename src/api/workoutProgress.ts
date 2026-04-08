@@ -4,6 +4,12 @@ type ProgressAction =
   | { type: "startSession"; sessionId: string }
   | { type: "updateLoad"; sessionId: string; exerciseName: string; load: string }
   | {
+      type: "updateCompletedSets";
+      sessionId: string;
+      exerciseName: string;
+      completedSets: number;
+    }
+  | {
       type: "setExerciseCompleted";
       sessionId: string;
       exerciseName: string;
@@ -63,6 +69,19 @@ export function updateLoad(
     sessionId,
     exerciseName,
     load,
+  });
+}
+
+export function updateCompletedSets(
+  sessionId: string,
+  exerciseName: string,
+  completedSets: number,
+): Promise<void> {
+  return sendProgressAction({
+    type: "updateCompletedSets",
+    sessionId,
+    exerciseName,
+    completedSets,
   });
 }
 

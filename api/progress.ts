@@ -9,6 +9,12 @@ type ProgressAction =
   | { type: "startSession"; sessionId: string }
   | { type: "updateLoad"; sessionId: string; exerciseName: string; load: string }
   | {
+      type: "updateCompletedSets";
+      sessionId: string;
+      exerciseName: string;
+      completedSets: number;
+    }
+  | {
       type: "setExerciseCompleted";
       sessionId: string;
       exerciseName: string;
@@ -25,6 +31,7 @@ type SessionProgressRow = {
   completed: boolean;
   exercises: Array<{
     load: { toString(): string } | null;
+    completedSets: number;
     completed: boolean;
     sessionExercise: {
       exercise: {
@@ -81,6 +88,7 @@ function toSessionProgressSnapshot(
         snapshot.loads[exerciseName] = exerciseProgress.load.toString();
       }
 
+      snapshot.completedSets[exerciseName] = exerciseProgress.completedSets;
       snapshot.completedExercises[exerciseName] = exerciseProgress.completed;
 
       return snapshot;
@@ -89,6 +97,7 @@ function toSessionProgressSnapshot(
       sessionId: progress.session.sourceId,
       date: (progress.completedAt ?? progress.startedAt).toISOString(),
       loads: {},
+      completedSets: {},
       completedExercises: {},
       completed: progress.completed,
     },
@@ -208,6 +217,29 @@ async function updateLoad(
   });
 }
 
+async function updateCompletedSets(
+  sessionId: string,
+  exerciseName: string,
+  completedSets: number,
+) {
+  const [sessionProgress, sessionExercise] = await Promise.all([
+    ensureSessionProgress(sessionId),
+    getSessionExercise(sessionId, exerciseName),
+  ]);
+
+  await prisma.exerciseProgress.upsert({
+    where: { sessionExerciseId: sessionExercise.id },
+    create: {
+      sessionExerciseId: sessionExercise.id,
+      sessionProgressId: sessionProgress.sessionId,
+      completedSets,
+    },
+    update: {
+      completedSets,
+    },
+  });
+}
+
 async function setSessionCompleted(sessionId: string, completed: boolean) {
   const session = await getSession(sessionId);
 
@@ -277,6 +309,13 @@ async function runAction(action: ProgressAction) {
       return;
     case "updateLoad":
       await updateLoad(action.sessionId, action.exerciseName, action.load);
+      return;
+    case "updateCompletedSets":
+      await updateCompletedSets(
+        action.sessionId,
+        action.exerciseName,
+        action.completedSets,
+      );
       return;
     case "setExerciseCompleted":
       await setExerciseCompleted(

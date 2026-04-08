@@ -81,6 +81,7 @@ model ExerciseProgress {
   sessionExerciseId String          @id
   sessionProgressId String
   load              Decimal?        @db.Decimal(6, 2)
+  completedSets     Int             @default(0)
   completed         Boolean         @default(false)
   completedAt       DateTime?
   updatedAt         DateTime        @updatedAt
