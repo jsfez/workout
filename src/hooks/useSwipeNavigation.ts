@@ -21,7 +21,8 @@ export function useSwipeNavigation({
   const onTouchStart: TouchEventHandler<HTMLElement> = (event) => {
     const target = event.target;
     isInteractive.current =
-      target instanceof Element && target.closest(INTERACTIVE_SELECTOR) !== null;
+      target instanceof Element &&
+      target.closest(INTERACTIVE_SELECTOR) !== null;
     const touch = event.touches[0];
     touchStart.current = { x: touch.clientX, y: touch.clientY };
   };

@@ -2,7 +2,12 @@ import type { WorkoutProgress } from "../types";
 
 type ProgressAction =
   | { type: "startSession"; sessionId: string }
-  | { type: "updateLoad"; sessionId: string; exerciseName: string; load: string }
+  | {
+      type: "updateLoad";
+      sessionId: string;
+      exerciseName: string;
+      load: string;
+    }
   | {
       type: "updateCompletedSets";
       sessionId: string;

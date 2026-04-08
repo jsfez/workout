@@ -15,7 +15,8 @@ const headingVariants = cva("font-bold text-text", {
 });
 
 interface HeadingProps
-  extends React.HTMLAttributes<HTMLHeadingElement>,
+  extends
+    React.HTMLAttributes<HTMLHeadingElement>,
     VariantProps<typeof headingVariants> {}
 
 export const Heading = ({ className, size, ...props }: HeadingProps) => {

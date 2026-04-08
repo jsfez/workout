@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { sessions } from "@/data/workouts";
 import { getLastLoadForExercise } from "@/api/workoutProgress";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
@@ -67,6 +67,29 @@ function isLoadValue(value: string | null | undefined): value is string {
   );
 }
 
+function getMedianRestDurationMs(rest: string) {
+  const restDurations = rest
+    .match(/\d+(?:[.,]\d+)?/g)
+    ?.map((duration) => Number(duration.replace(",", ".")))
+    .filter(Number.isFinite);
+
+  if (!restDurations?.length) return 0;
+
+  const shortestRest = Math.min(...restDurations);
+  const longestRest = Math.max(...restDurations);
+  const medianRest = (shortestRest + longestRest) / 2;
+
+  return Math.round(medianRest * 60 * 1000);
+}
+
+function formatTimerDuration(durationMs: number) {
+  const totalSeconds = Math.ceil(durationMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+
+  return `${minutes}:${seconds}`;
+}
+
 const StatCardLabel = ({ children }: { children: React.ReactNode }) => (
   <p className="mt-0.5 text-xs text-text-subtle">{children}</p>
 );
@@ -81,33 +104,65 @@ const StatCardValue = ({
   <p className={cn("text-xl font-bold text-text", className)}>{children}</p>
 );
 
-const statCardClassName = "rounded-xl bg-surface-raised p-3 text-center flex-1";
-
 const StatCard = ({ children }: { children: React.ReactNode }) => {
-  return <div className={statCardClassName}>{children}</div>;
+  return (
+    <div className="rounded-xl bg-surface-raised py-3 text-center flex-1 relative">
+      {children}
+    </div>
+  );
 };
 
-const StatCardButton = ({
-  children,
-  onClick,
+const RestTimerCard = ({
+  value,
+  progress,
+  isRunning,
+  onStart,
+  onStop,
   ariaLabel,
 }: {
-  children: React.ReactNode;
-  onClick: () => void;
+  value: string;
+  progress: number;
+  isRunning: boolean;
+  onStart: () => void;
+  onStop: () => void;
   ariaLabel: string;
 }) => {
+  const progressDegrees = Math.round(Math.max(0, Math.min(progress, 1)) * 360);
+
   return (
-    <button
-      type="button"
-      className={cn(
-        statCardClassName,
-        "transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+    <div className="rounded-xl bg-surface-raised text-center flex-1 flex flex-col items-center justify-center h-17.5 relative w-full">
+      {isRunning && (
+        <button
+          type="button"
+          className="absolute right-2 top-2 grid size-5 place-items-center rounded-full bg-surface-muted text-text-muted transition-colors hover:bg-surface-hover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          onClick={onStop}
+          aria-label="Arrêter le timer de repos"
+        >
+          <X className="size-3" />
+        </button>
       )}
-      onClick={onClick}
-      aria-label={ariaLabel}
-    >
-      {children}
-    </button>
+
+      <button
+        type="button"
+        className="rounded-full transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        onClick={onStart}
+        aria-label={ariaLabel}
+      >
+        <div
+          className="grid size-12 place-items-center rounded-full"
+          style={{
+            background: `conic-gradient(rgb(var(--color-primary)) ${progressDegrees}deg, rgb(var(--color-surface-muted)) 0deg)`,
+          }}
+          aria-hidden="true"
+        >
+          <div className="grid size-10 place-items-center rounded-full bg-surface-raised">
+            <span className="text-sm font-bold text-text absolute">
+              {value}
+            </span>
+          </div>
+        </div>
+      </button>
+    </div>
   );
 };
 
@@ -250,6 +305,11 @@ export const ExerciseView = ({
   const completedExercises = sessionProgress?.completedExercises ?? {};
   const isExerciseCompleted =
     completedExercises[selectedExercise.name] ?? false;
+  const selectedExerciseKey = `${sessionId}:${selectedExercise.name}`;
+  const restDurationMs = useMemo(
+    () => getMedianRestDurationMs(selectedExercise.rest),
+    [selectedExercise.rest],
+  );
   const lastLoad = getLastLoadForExercise(
     progress,
     selectedExercise.name,
@@ -258,6 +318,11 @@ export const ExerciseView = ({
   );
 
   const [loadInput, setLoadInput] = useState(savedLoad);
+  const [restTimer, setRestTimer] = useState<{
+    exerciseKey: string;
+    endAt: number;
+  } | null>(null);
+  const [restTimerRemainingMs, setRestTimerRemainingMs] = useState(0);
 
   const previousIndex = exerciseIndex > 0 ? exerciseIndex - 1 : null;
   const nextIndex =
@@ -302,6 +367,21 @@ export const ExerciseView = ({
     );
   }
 
+  function handleRestTimerClick() {
+    if (restDurationMs <= 0) return;
+
+    setRestTimerRemainingMs(restDurationMs);
+    setRestTimer({
+      exerciseKey: selectedExerciseKey,
+      endAt: Date.now() + restDurationMs,
+    });
+  }
+
+  function handleStopRestTimerClick() {
+    setRestTimer(null);
+    setRestTimerRemainingMs(0);
+  }
+
   function goToExercise(index: number) {
     void saveLoad();
     onSelectExercise(index);
@@ -339,6 +419,55 @@ export const ExerciseView = ({
     }
   };
 
+  const activeRestTimerEndAt =
+    restTimer?.exerciseKey === selectedExerciseKey ? restTimer.endAt : null;
+
+  useEffect(() => {
+    if (activeRestTimerEndAt === null) return;
+
+    const timerEndAt = activeRestTimerEndAt;
+
+    function updateTimer() {
+      const nextRemainingMs = Math.max(0, timerEndAt - Date.now());
+
+      setRestTimerRemainingMs(nextRemainingMs);
+    }
+
+    updateTimer();
+
+    const timerInterval = window.setInterval(updateTimer, 250);
+    const timerTimeout = window.setTimeout(
+      () => {
+        setRestTimerRemainingMs(0);
+        setRestTimer((currentRestTimer) =>
+          currentRestTimer?.exerciseKey === selectedExerciseKey &&
+          currentRestTimer.endAt === timerEndAt
+            ? null
+            : currentRestTimer,
+        );
+
+        if ("vibrate" in navigator) {
+          navigator.vibrate([300, 100, 300]);
+        }
+      },
+      Math.max(0, timerEndAt - Date.now()),
+    );
+
+    return () => {
+      window.clearInterval(timerInterval);
+      window.clearTimeout(timerTimeout);
+    };
+  }, [activeRestTimerEndAt, selectedExerciseKey]);
+
+  const restTimerValue =
+    activeRestTimerEndAt === null
+      ? formatTimerDuration(restDurationMs)
+      : formatTimerDuration(restTimerRemainingMs);
+  const restTimerProgress =
+    activeRestTimerEndAt === null || restDurationMs <= 0
+      ? 1
+      : restTimerRemainingMs / restDurationMs;
+
   return (
     <Page {...swipeHandlers}>
       <PageHeader>
@@ -358,32 +487,40 @@ export const ExerciseView = ({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <StatCardButton
+        <div className="flex items-center gap-4 flex-wrap">
+          <button
+            type="button"
             onClick={handleCompletedSetsClick}
-            ariaLabel={`Modifier les séries effectuées pour ${selectedExercise.name}`}
+            aria-label={`Modifier les séries effectuées pour ${selectedExercise.name}`}
+            className="flex-1"
           >
-            <StatCardValue>{`${completedSets}/${selectedExercise.sets}`}</StatCardValue>
-            <StatCardLabel>{`${selectedExercise.reps} reps × ${selectedExercise.sets}`}</StatCardLabel>
-          </StatCardButton>
+            <StatCard>
+              <StatCardValue>{`${completedSets}/${selectedExercise.sets}`}</StatCardValue>
+              <StatCardLabel>{`${selectedExercise.reps} reps × ${selectedExercise.sets}`}</StatCardLabel>
+            </StatCard>
+          </button>
           <StatCard>
             <StatCardValue className="text-success-foreground">
               {selectedExercise.rpe}
             </StatCardValue>
             <StatCardLabel>RPE</StatCardLabel>
           </StatCard>
-          <StatCard>
-            <StatCardValue>
-              {selectedExercise.rest.replace(" min", "")}
-            </StatCardValue>
-            <StatCardLabel>Repos (min)</StatCardLabel>
-          </StatCard>
-          <StatCard>
-            <StatCardValue className="text-primary">
-              {lastLoad ? `${lastLoad} kg` : "-"}
-            </StatCardValue>
-            <StatCardLabel>Dernière charge</StatCardLabel>
-          </StatCard>
+          <RestTimerCard
+            value={restTimerValue}
+            progress={restTimerProgress}
+            isRunning={activeRestTimerEndAt !== null}
+            onStart={handleRestTimerClick}
+            onStop={handleStopRestTimerClick}
+            ariaLabel={`Démarrer le timer de repos pour ${selectedExercise.name}`}
+          />
+          {lastLoad && (
+            <StatCard>
+              <StatCardValue className="text-primary">
+                `${lastLoad} kg`
+              </StatCardValue>
+              <StatCardLabel>Dernière charge</StatCardLabel>
+            </StatCard>
+          )}
         </div>
       </PageHeader>
 

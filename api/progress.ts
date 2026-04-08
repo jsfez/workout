@@ -7,7 +7,12 @@ import type {
 
 type ProgressAction =
   | { type: "startSession"; sessionId: string }
-  | { type: "updateLoad"; sessionId: string; exerciseName: string; load: string }
+  | {
+      type: "updateLoad";
+      sessionId: string;
+      exerciseName: string;
+      load: string;
+    }
   | {
       type: "updateCompletedSets";
       sessionId: string;
@@ -140,7 +145,9 @@ async function getSession(sessionId: string) {
   });
 
   if (!session) {
-    throw new Error(`Session ${sessionId} was not found. Did you run the seed?`);
+    throw new Error(
+      `Session ${sessionId} was not found. Did you run the seed?`,
+    );
   }
 
   return session;
