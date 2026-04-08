@@ -9,11 +9,11 @@ import { SectionHeading } from "@/components/SectionHeading";
 import { Subtitle } from "@/components/Subtitle";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import type { WorkoutStore } from "@/types";
-import { ProgressSummary } from "../components/ProgressSummary";
-import { SessionCard, type SessionCardStatus } from "../components/SessionCard";
-import { NextSessionCard } from "../components/NextSessionCard";
-import { FixedPageHeader } from "../components/PageHeader";
-import { Page } from "../components/Page";
+import { ProgressSummary } from "@/components/ProgressSummary";
+import { SessionCard, type SessionCardStatus } from "@/components/SessionCard";
+import { NextSessionCard } from "@/components/NextSessionCard";
+import { FixedPageHeader } from "@/components/PageHeader";
+import { Page } from "@/components/Page";
 
 interface DashboardProps {
   onSelectSession: (sessionId: string) => void;

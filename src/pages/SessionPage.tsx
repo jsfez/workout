@@ -1,6 +1,5 @@
 import { sessions } from "@/data/workouts";
 import {
-  completeSession,
   getLastLoadForExercise,
   setSessionCompleted,
 } from "@/store/workoutStore";
@@ -10,10 +9,10 @@ import { BackButton } from "@/components/BackButton";
 import { Heading } from "@/components/Heading";
 import { Subtitle } from "@/components/Subtitle";
 import type { WorkoutStore } from "@/types";
-import { ExerciseCard } from "../components/ExerciceCard";
-import { FixedPageHeader } from "../components/PageHeader";
-import { Page } from "../components/Page";
-import { CompletedSwitch } from "../components/CompletedSwitch";
+import { ExerciseCard } from "@/components/ExerciceCard";
+import { FixedPageHeader } from "@/components/PageHeader";
+import { Page } from "@/components/Page";
+import { CompletedSwitch } from "@/components/CompletedSwitch";
 
 interface SessionViewProps {
   sessionId: string;
@@ -55,12 +54,6 @@ export const SessionView = ({
   const isCompleted = log?.completed ?? false;
   const allSessionIds = sessions.map((s) => s.id);
   const completedExerciseMap = log?.completedExercises ?? {};
-
-  function handleComplete() {
-    completeSession(sessionId);
-    onStoreChange();
-    onBack();
-  }
 
   function handleSessionCompletedChange(checked: boolean) {
     setSessionCompleted(sessionId, checked);

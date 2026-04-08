@@ -19,19 +19,21 @@ import {
 } from "@/components/ui/select";
 import { BackButton } from "@/components/BackButton";
 import { Heading } from "@/components/Heading";
-import type { WorkoutStore } from "@/types";
+import type { Exercise, WorkoutStore } from "@/types";
 import { Page } from "@/components/Page";
 import { PageHeader } from "@/components/PageHeader";
 import { ColoredEmphase } from "@/components/ColoredEmphase";
 import { Label } from "@/components/ui/label";
 import {
   Card,
+  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/card";
-import { PageFooter } from "../components/PageFooter";
-import { CompletedSwitch } from "../components/CompletedSwitch";
+} from "@/components/ui/card";
+import { PageFooter } from "@/components/PageFooter";
+import { CompletedSwitch } from "@/components/CompletedSwitch";
+import { OtherExerciseCard } from "@/components/OtherExerciceCard";
 
 interface ExerciseViewProps {
   sessionId: string;
@@ -107,6 +109,49 @@ const LoadSelector = ({
   );
 };
 
+const SessionExerciseList = ({
+  exercises,
+  currentIndex,
+  completedExercises,
+  onSelectExercise,
+}: {
+  exercises: Exercise[];
+  currentIndex: number;
+  completedExercises: Record<string, boolean>;
+  onSelectExercise: (exerciseIndex: number) => void;
+}) => {
+  const incompleteExercises = exercises.filter(
+    (exercise, index) =>
+      index !== currentIndex && !completedExercises[exercise.name],
+  );
+
+  if (incompleteExercises.length === 0) return null;
+
+  return (
+    <Card className="mb-24">
+      <CardHeader>
+        <CardTitle>Encore à faire</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2">
+        {exercises.map((exercise, index) => {
+          if (index === currentIndex || completedExercises[exercise.name]) {
+            return null;
+          }
+
+          return (
+            <OtherExerciseCard
+              key={exercise.name}
+              exercise={exercise}
+              index={index}
+              onSelectExercise={onSelectExercise}
+            />
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+};
+
 const PreviousButton = ({
   onClick,
   disabled,
@@ -164,8 +209,9 @@ export const ExerciseView = ({
   const log = store.logs.find((l) => l.sessionId === sessionId);
   const allSessionIds = sessions.map((s) => s.id);
   const savedLoad = log?.loads[selectedExercise.name] ?? "";
+  const completedExercises = log?.completedExercises ?? {};
   const isExerciseCompleted =
-    log?.completedExercises?.[selectedExercise.name] ?? false;
+    completedExercises[selectedExercise.name] ?? false;
   const lastLoad = getLastLoadForExercise(
     selectedExercise.name,
     sessionId,
@@ -302,6 +348,13 @@ export const ExerciseView = ({
         value={loadInput}
         options={loadOptions}
         onValueChange={setLoadInput}
+      />
+
+      <SessionExerciseList
+        exercises={session.exercises}
+        currentIndex={exerciseIndex}
+        completedExercises={completedExercises}
+        onSelectExercise={goToExercise}
       />
 
       <PageFooter>
