@@ -10,6 +10,7 @@
     "build": "prisma generate && tsc -b && vite build",
     "lint": "eslint .",
     "check-types": "tsc --noEmit",
+    "test:e2e": "playwright test",
     "preview": "vite preview",
     "knip": "knip",
     "format": "prettier --write .",
@@ -36,6 +37,8 @@
     "vercel": "^50.40.0"
   },
   "devDependencies": {
+    "@argos-ci/cli": "^4.1.4",
+    "@argos-ci/playwright": "^6.6.1",
     "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.59.1",
     "@types/node": "^24.12.2",

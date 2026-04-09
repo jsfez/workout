@@ -1,26 +1,30 @@
-import { test, expect } from "@playwright/test";
+import { argosScreenshot } from "@argos-ci/playwright";
+import { test, expect, type Page } from "@playwright/test";
+
+async function expectHeadingAndCapture(
+  page: Page,
+  heading: string,
+  screenshotName: string,
+) {
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(heading);
+  await argosScreenshot(page, screenshotName);
+}
 
 test("test pages", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Mon programme",
-  );
+  await expectHeadingAndCapture(page, "Mon programme", "dashboard");
 
   await page
     .getByRole("button", {
       name: "#1 WEEK 1 — #1 7 exercices",
     })
     .click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "WEEK 1 — #1",
-  );
+  await expectHeadingAndCapture(page, "WEEK 1 — #1", "session-week-1-1");
 
   await page
     .getByRole("button", {
       name: "1 Back Squat 3×6 RPE 7 3-4 min",
     })
     .click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Back Squat",
-  );
+  await expectHeadingAndCapture(page, "Back Squat", "exercise-back-squat");
 });
