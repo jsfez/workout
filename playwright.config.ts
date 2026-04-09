@@ -66,11 +66,11 @@ export default defineConfig({
 
     /* Test against mobile viewports. */
     {
-      name: "Mobile Chrome",
-      use: { ...devices["Pixel 5"] },
+      name: "chromium",
+      use: { ...devices["iPhone 12"] },
     },
     {
-      name: "Mobile Safari",
+      name: "safari",
       use: { ...devices["iPhone 12"] },
     },
 
