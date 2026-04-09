@@ -7,7 +7,7 @@ async function expectHeadingAndCapture(
   screenshotName: string,
 ) {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(heading);
-  await argosScreenshot(page, screenshotName);
+  await argosScreenshot(page, screenshotName, { fullPage: false });
 }
 
 test("test pages", async ({ page }) => {
