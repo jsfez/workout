@@ -1,8 +1,4 @@
-import {
-  defineConfig,
-  devices,
-  type PlaywrightTestConfig,
-} from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 import { createArgosReporterOptions } from "@argos-ci/playwright/reporter";
 
 /**
@@ -12,13 +8,6 @@ import { createArgosReporterOptions } from "@argos-ci/playwright/reporter";
 // import dotenv from 'dotenv';
 // import path from 'path';
 // dotenv.config({ path: path.resolve(__dirname, '.env') });
-
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
-const defaultReporters: PlaywrightTestConfig["reporter"] = [
-  ["html", { open: "never" }],
-];
 
 export default defineConfig({
   testDir: "./tests",
