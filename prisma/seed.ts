@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../generated/prisma/client.ts";
+import { PrismaClient } from "@prisma/client";
 import { sessions } from "../src/data/workouts-initial.ts";
 
 const PROGRAM_SLUG = "initial-workout";

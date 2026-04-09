@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "postinstall": "prisma generate",
     "start": "vercel dev",
     "dev:vite": "vite",
     "build": "prisma generate && tsc -b && vite build",

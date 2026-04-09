@@ -23,6 +23,8 @@ export const CompletedSwitch = ({
       onCheckedChange={onCheckedChange}
       className="data-[state=checked]:border-success data-[state=checked]:bg-success"
     />
-    <Label htmlFor="session-completed">Terminée</Label>
+    <Label htmlFor="session-completed" className="cursor-pointer">
+      Terminée
+    </Label>
   </div>
 );

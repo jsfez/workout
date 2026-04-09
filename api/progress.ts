@@ -1,9 +1,11 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { prisma } from "./_prisma.ts";
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client";
 import type {
   SessionProgressSnapshot,
   WorkoutProgress,
-} from "../src/types/index.ts";
+} from "../src/types/index";
 
 type ProgressAction =
   | { type: "startSession"; sessionId: string }
@@ -45,6 +47,26 @@ type SessionProgressRow = {
     };
   }>;
 };
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is required.");
+}
+
+const globalForPrisma = globalThis as typeof globalThis & {
+  prisma?: PrismaClient;
+};
+
+const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    adapter: new PrismaPg({ connectionString }),
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
 
 function sendJson(res: ServerResponse, statusCode: number, body: unknown) {
   res.statusCode = statusCode;

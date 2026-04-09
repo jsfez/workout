@@ -7,7 +7,8 @@ interface SwipeNavigationOptions {
   threshold?: number;
 }
 
-const INTERACTIVE_SELECTOR = "input, textarea, select, a";
+const INTERACTIVE_SELECTOR =
+  "button, input, textarea, select, a, label, [role='switch']";
 
 export function useSwipeNavigation({
   onSwipeLeft,
