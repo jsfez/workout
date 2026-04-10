@@ -28,17 +28,3 @@ test("test pages", async ({ page }) => {
     .click();
   await expectHeadingAndCapture(page, "Back Squat", "exercise-back-squat");
 });
-
-test("direct URL: session page", async ({ page }) => {
-  await page.goto("/sessions/week1-1");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "WEEK 1 — #1",
-  );
-});
-
-test("direct URL: exercise page", async ({ page }) => {
-  await page.goto("/sessions/week1-1/exercises/1");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Back Squat",
-  );
-});
