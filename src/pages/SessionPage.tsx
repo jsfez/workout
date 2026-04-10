@@ -106,6 +106,7 @@ export const SessionView = ({
             exercise={exercise}
             index={index}
             isComplete={completedExerciseMap[exercise.name] ?? false}
+            currentLoad={sessionProgress?.loads[exercise.name] ?? null}
             lastLoad={getLastLoadForExercise(
               progress,
               exercise.name,

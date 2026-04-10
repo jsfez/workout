@@ -51,10 +51,13 @@ export const ExerciseCard = ({
   index,
   isComplete,
   onClick,
+  currentLoad,
+  lastLoad,
 }: {
   exercise: Exercise;
   index: number;
   isComplete: boolean;
+  currentLoad: string | null;
   lastLoad: string | null;
   onClick: () => void;
 }) => {
@@ -83,7 +86,21 @@ export const ExerciseCard = ({
           </Badges>
         </div>
 
-        <ChevronRight className="shrink-0 size-4 text-text-faint" />
+        {currentLoad ? (
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-base font-bold text-success-foreground">
+              {currentLoad} kg
+            </span>
+            <span className="text-xs text-success-emphasis">Actuelle</span>
+          </div>
+        ) : lastLoad ? (
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-base">{lastLoad} kg</span>
+            <span className="text-xs ">Dernière</span>
+          </div>
+        ) : (
+          <ChevronRight className="shrink-0 size-4 text-text-faint" />
+        )}
       </div>
     </button>
   );
