@@ -15,16 +15,13 @@ test("test pages", async ({ page }) => {
   await expectHeadingAndCapture(page, "Mon programme", "dashboard");
 
   await page
-    .getByRole("button", {
-      name: "#1 WEEK 1 — #1 7 exercices",
-    })
+    .getByRole("button", { name: "WEEK 1 — #1", exact: false })
     .click();
   await expectHeadingAndCapture(page, "WEEK 1 — #1", "session-week-1-1");
 
   await page
-    .getByRole("button", {
-      name: "1 Back Squat 3×6 RPE 7 3-4 min",
-    })
+    .getByRole("button", { name: "Back Squat", exact: false })
+    .first()
     .click();
   await expectHeadingAndCapture(page, "Back Squat", "exercise-back-squat");
 });

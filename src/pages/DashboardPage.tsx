@@ -1,5 +1,4 @@
 import { Dumbbell } from "lucide-react";
-import { sessions } from "@/data/workouts";
 import { formatDate } from "@/lib/utils";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 
@@ -7,7 +6,7 @@ import { Heading } from "@/components/Heading";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Subtitle } from "@/components/Subtitle";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import type { WorkoutProgress } from "@/types";
+import type { Session, WorkoutProgress } from "@/types";
 import { ProgressSummary } from "@/components/ProgressSummary";
 import { SessionCard, type SessionCardStatus } from "@/components/SessionCard";
 import { NextSessionCard } from "@/components/NextSessionCard";
@@ -15,6 +14,8 @@ import { FixedPageHeader } from "@/components/PageHeader";
 import { Page } from "@/components/Page";
 
 interface DashboardProps {
+  sessions: Session[];
+  isLoading: boolean;
   onSelectSession: (sessionId: string) => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
@@ -43,6 +44,8 @@ const Brand = () => (
 );
 
 export const Dashboard = ({
+  sessions,
+  isLoading,
   onSelectSession,
   isDarkMode,
   onToggleTheme,
@@ -90,65 +93,75 @@ export const Dashboard = ({
       </FixedPageHeader>
 
       <Page {...swipeHandlers}>
-        <ProgressSummary
-          completedCount={completedCount}
-          totalCount={totalCount}
-          progressPct={progressPct}
-          lastCompletedLabel={
-            lastCompleted ? formatDate(lastCompleted.date) : undefined
-          }
-        />
-
-        {nextSession && (
-          <NextSessionCard session={nextSession} onStart={handleStart} />
-        )}
-
-        <div className="pb-8 flex-1">
-          <SectionHeading className="mb-3">Toutes les séances</SectionHeading>
-
-          <div className="flex flex-col gap-6">
-            {weeks.map((week) => {
-              const weekSessions = sessions.filter((s) => s.week === week);
-
-              return (
-                <div key={week}>
-                  <p className="mb-2 text-xs font-semibold text-text-faint uppercase tracking-widest">
-                    Semaine {week}
-                  </p>
-
-                  <div className="flex flex-col gap-2">
-                    {weekSessions.map((session) => {
-                      const sessionProgress = progress.sessions.find(
-                        (item) => item.sessionId === session.id,
-                      );
-                      const status = getSessionStatus(
-                        session.id,
-                        completedIds,
-                        progress.currentSessionId,
-                        nextSession?.id,
-                      );
-
-                      return (
-                        <SessionCard
-                          key={session.id}
-                          day={session.day}
-                          label={session.label}
-                          meta={
-                            sessionProgress?.date
-                              ? formatDate(sessionProgress.date)
-                              : `${session.exercises.length} exercices`
-                          }
-                          status={status}
-                          onClick={() => handleStart(session.id)}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+        {isLoading ? (
+          <div className="flex flex-1 items-center justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
           </div>
-        </div>
+        ) : (
+          <>
+            <ProgressSummary
+              completedCount={completedCount}
+              totalCount={totalCount}
+              progressPct={progressPct}
+              lastCompletedLabel={
+                lastCompleted ? formatDate(lastCompleted.date) : undefined
+              }
+            />
+
+            {nextSession && (
+              <NextSessionCard session={nextSession} onStart={handleStart} />
+            )}
+
+            <div className="pb-8 flex-1">
+              <SectionHeading className="mb-3">
+                Toutes les séances
+              </SectionHeading>
+
+              <div className="flex flex-col gap-6">
+                {weeks.map((week) => {
+                  const weekSessions = sessions.filter((s) => s.week === week);
+
+                  return (
+                    <div key={week}>
+                      <p className="mb-2 text-xs font-semibold text-text-faint uppercase tracking-widest">
+                        Semaine {week}
+                      </p>
+
+                      <div className="flex flex-col gap-2">
+                        {weekSessions.map((session) => {
+                          const sessionProgress = progress.sessions.find(
+                            (item) => item.sessionId === session.id,
+                          );
+                          const status = getSessionStatus(
+                            session.id,
+                            completedIds,
+                            progress.currentSessionId,
+                            nextSession?.id,
+                          );
+
+                          return (
+                            <SessionCard
+                              key={session.id}
+                              day={session.day}
+                              label={session.label}
+                              meta={
+                                sessionProgress?.date
+                                  ? formatDate(sessionProgress.date)
+                                  : `${session.exercises.length} exercices`
+                              }
+                              status={status}
+                              onClick={() => handleStart(session.id)}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
       </Page>
     </>
   );

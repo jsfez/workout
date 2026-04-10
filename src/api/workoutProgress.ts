@@ -1,4 +1,4 @@
-import type { WorkoutProgress } from "../types";
+import type { Session, WorkoutProgress } from "../types";
 
 type ProgressAction =
   | { type: "startSession"; sessionId: string }
@@ -21,6 +21,24 @@ type ProgressAction =
       completed: boolean;
     }
   | { type: "setSessionCompleted"; sessionId: string; completed: boolean };
+
+export async function getSessions(): Promise<Session[]> {
+  try {
+    const response = await fetch("/api/sessions");
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `Sessions request failed with status ${response.status}: ${errorBody}`,
+      );
+    }
+
+    return response.json() as Promise<Session[]>;
+  } catch (error) {
+    console.warn("Sessions request failed.", error);
+    return [];
+  }
+}
 
 export const emptyProgress: WorkoutProgress = {
   sessions: [],

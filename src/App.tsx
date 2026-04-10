@@ -4,6 +4,7 @@ import { ExerciseView } from "@/pages/ExercisePage";
 import { SessionView } from "@/pages/SessionPage";
 import {
   emptyProgress,
+  getSessions,
   getWorkoutProgress,
   setExerciseCompleted,
   setSessionCompleted,
@@ -11,8 +12,7 @@ import {
   updateCompletedSets,
   updateLoad,
 } from "./api/workoutProgress";
-import type { WorkoutProgress } from "@/types";
-import { sessions } from "@/data/workouts";
+import type { Session, WorkoutProgress } from "@/types";
 
 type AppRoute = {
   sessionId: string | null;
@@ -24,7 +24,7 @@ const dashboardRoute: AppRoute = {
   exerciseIndex: null,
 };
 
-function parseRoute(): AppRoute {
+function parseRoute(sessions: Session[]): AppRoute {
   const [, resource, sessionId, nestedResource, exerciseIndex] =
     window.location.pathname.split("/");
 
@@ -102,7 +102,10 @@ function updateSessionProgress(
 }
 
 const App = () => {
-  const [route, setRoute] = useState<AppRoute>(() => parseRoute());
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const sessionsRef = useRef<Session[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [route, setRoute] = useState<AppRoute>(dashboardRoute);
   const [progress, setProgress] = useState<WorkoutProgress>(emptyProgress);
   const progressRef = useRef(progress);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -215,7 +218,7 @@ const App = () => {
           }),
         () => setExerciseCompleted(sessionId, exerciseName, completed),
       ),
-    [mutateProgress],
+    [mutateProgress, sessions],
   );
 
   const handleSetSessionCompleted = useCallback(
@@ -235,12 +238,18 @@ const App = () => {
   useEffect(() => {
     let isMounted = true;
 
-    void getWorkoutProgress().then((nextProgress) => {
-      if (isMounted) {
-        progressRef.current = nextProgress;
-        setProgress(nextProgress);
-      }
-    });
+    void Promise.all([getSessions(), getWorkoutProgress()]).then(
+      ([nextSessions, nextProgress]) => {
+        if (isMounted) {
+          sessionsRef.current = nextSessions;
+          setSessions(nextSessions);
+          progressRef.current = nextProgress;
+          setProgress(nextProgress);
+          setRoute(parseRoute(nextSessions));
+          setIsLoading(false);
+        }
+      },
+    );
 
     return () => {
       isMounted = false;
@@ -248,7 +257,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    const handlePopState = () => setRoute(parseRoute());
+    const handlePopState = () => setRoute(parseRoute(sessionsRef.current));
 
     window.addEventListener("popstate", handlePopState);
 
@@ -264,6 +273,7 @@ const App = () => {
     return (
       <ExerciseView
         key={`${route.sessionId}-${route.exerciseIndex}`}
+        sessions={sessions}
         sessionId={route.sessionId}
         exerciseIndex={route.exerciseIndex}
         onBack={() => {
@@ -283,6 +293,7 @@ const App = () => {
   if (route.sessionId) {
     return (
       <SessionView
+        sessions={sessions}
         sessionId={route.sessionId}
         onBack={() => {
           navigate(dashboardRoute);
@@ -298,6 +309,8 @@ const App = () => {
 
   return (
     <Dashboard
+      sessions={sessions}
+      isLoading={isLoading}
       onSelectSession={handleStartSession}
       isDarkMode={isDarkMode}
       onToggleTheme={() => setIsDarkMode((current) => !current)}

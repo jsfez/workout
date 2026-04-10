@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { sessions } from "@/data/workouts";
 import { getLastLoadForExercise } from "@/api/workoutProgress";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { cn } from "@/lib/utils";
@@ -15,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { BackButton } from "@/components/BackButton";
 import { Heading } from "@/components/Heading";
-import type { Exercise, WorkoutProgress } from "@/types";
+import type { Exercise, Session, WorkoutProgress } from "@/types";
 import { Page } from "@/components/Page";
 import { PageHeader } from "@/components/PageHeader";
 import { ColoredEmphase } from "@/components/ColoredEmphase";
@@ -33,6 +32,7 @@ import { OtherExerciseCard } from "@/components/OtherExerciceCard";
 import { TimerCard } from "../components/TimerCard";
 
 interface ExerciseViewProps {
+  sessions: Session[];
   sessionId: string;
   exerciseIndex: number;
   onBack: () => void;
@@ -230,6 +230,7 @@ const NextButton = ({
 );
 
 export const ExerciseView = ({
+  sessions,
   sessionId,
   exerciseIndex,
   onBack,

@@ -40,10 +40,7 @@ export const FixedPageHeader = ({
 
   return (
     <>
-      <div
-        aria-hidden="true"
-        style={{ height: headerHeight }}
-      />
+      <div aria-hidden="true" style={{ height: headerHeight }} />
       <div
         className={cn("fixed inset-x-0 top-0 z-30 bg-background", className)}
         {...props}

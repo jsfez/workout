@@ -1,17 +1,17 @@
-import { sessions } from "@/data/workouts";
 import { getLastLoadForExercise } from "@/api/workoutProgress";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { Progress } from "@/components/ui/progress";
 import { BackButton } from "@/components/BackButton";
 import { Heading } from "@/components/Heading";
 import { Subtitle } from "@/components/Subtitle";
-import type { WorkoutProgress } from "@/types";
+import type { Session, WorkoutProgress } from "@/types";
 import { ExerciseCard } from "@/components/ExerciceCard";
 import { FixedPageHeader } from "@/components/PageHeader";
 import { Page } from "@/components/Page";
 import { CompletedSwitch } from "@/components/CompletedSwitch";
 
 interface SessionViewProps {
+  sessions: Session[];
   sessionId: string;
   onBack: () => void;
   onSelectExercise: (exerciseIndex: number) => void;
@@ -43,6 +43,7 @@ const SessionProgress = ({
 };
 
 export const SessionView = ({
+  sessions,
   sessionId,
   onBack,
   onSelectExercise,

@@ -7,6 +7,6 @@
     "prisma/**/*.ts",
     "*.config.{ts,js}"
   ],
-  "ignoreDependencies": ["@prisma/client"],
+  "ignoreDependencies": ["@argos-ci/cli"],
   "tags": ["-lintignore"]
 }
