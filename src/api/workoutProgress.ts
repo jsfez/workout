@@ -1,26 +1,34 @@
 import type { Session, WorkoutProgress } from "../types";
 
 type ProgressAction =
-  | { type: "startSession"; sessionId: string }
+  | { type: "startSession"; userId: string; sessionId: string }
   | {
       type: "updateLoad";
+      userId: string;
       sessionId: string;
       exerciseName: string;
       load: string;
     }
   | {
       type: "updateCompletedSets";
+      userId: string;
       sessionId: string;
       exerciseName: string;
       completedSets: number;
     }
   | {
       type: "setExerciseCompleted";
+      userId: string;
       sessionId: string;
       exerciseName: string;
       completed: boolean;
     }
-  | { type: "setSessionCompleted"; sessionId: string; completed: boolean };
+  | {
+      type: "setSessionCompleted";
+      userId: string;
+      sessionId: string;
+      completed: boolean;
+    };
 
 export async function getSessions(): Promise<Session[]> {
   try {
@@ -45,9 +53,13 @@ export const emptyProgress: WorkoutProgress = {
   currentSessionId: null,
 };
 
-export async function getWorkoutProgress(): Promise<WorkoutProgress> {
+export async function getWorkoutProgress(
+  userId: string,
+): Promise<WorkoutProgress> {
   try {
-    const response = await fetch("/api/progress");
+    const response = await fetch(
+      `/api/progress?userId=${encodeURIComponent(userId)}`,
+    );
 
     if (!response.ok) {
       const errorBody = await response.text();
@@ -78,17 +90,19 @@ async function sendProgressAction(action: ProgressAction): Promise<void> {
   }
 }
 
-export function startSession(sessionId: string): Promise<void> {
-  return sendProgressAction({ type: "startSession", sessionId });
+export function startSession(userId: string, sessionId: string): Promise<void> {
+  return sendProgressAction({ type: "startSession", userId, sessionId });
 }
 
 export function updateLoad(
+  userId: string,
   sessionId: string,
   exerciseName: string,
   load: string,
 ): Promise<void> {
   return sendProgressAction({
     type: "updateLoad",
+    userId,
     sessionId,
     exerciseName,
     load,
@@ -96,12 +110,14 @@ export function updateLoad(
 }
 
 export function updateCompletedSets(
+  userId: string,
   sessionId: string,
   exerciseName: string,
   completedSets: number,
 ): Promise<void> {
   return sendProgressAction({
     type: "updateCompletedSets",
+    userId,
     sessionId,
     exerciseName,
     completedSets,
@@ -109,12 +125,14 @@ export function updateCompletedSets(
 }
 
 export function setExerciseCompleted(
+  userId: string,
   sessionId: string,
   exerciseName: string,
   completed: boolean,
 ): Promise<void> {
   return sendProgressAction({
     type: "setExerciseCompleted",
+    userId,
     sessionId,
     exerciseName,
     completed,
@@ -122,11 +140,13 @@ export function setExerciseCompleted(
 }
 
 export function setSessionCompleted(
+  userId: string,
   sessionId: string,
   completed: boolean,
 ): Promise<void> {
   return sendProgressAction({
     type: "setSessionCompleted",
+    userId,
     sessionId,
     completed,
   });

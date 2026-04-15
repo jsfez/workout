@@ -8,26 +8,34 @@ import type {
 } from "../src/types/index";
 
 type ProgressAction =
-  | { type: "startSession"; sessionId: string }
+  | { type: "startSession"; userId: string; sessionId: string }
   | {
       type: "updateLoad";
+      userId: string;
       sessionId: string;
       exerciseName: string;
       load: string;
     }
   | {
       type: "updateCompletedSets";
+      userId: string;
       sessionId: string;
       exerciseName: string;
       completedSets: number;
     }
   | {
       type: "setExerciseCompleted";
+      userId: string;
       sessionId: string;
       exerciseName: string;
       completed: boolean;
     }
-  | { type: "setSessionCompleted"; sessionId: string; completed: boolean };
+  | {
+      type: "setSessionCompleted";
+      userId: string;
+      sessionId: string;
+      completed: boolean;
+    };
 
 type SessionProgressRow = {
   session: {
@@ -131,13 +139,39 @@ function toSessionProgressSnapshot(
   );
 }
 
-async function getWorkoutProgress(): Promise<WorkoutProgress> {
+function getUserIdFromRequest(req: IncomingMessage) {
+  const url = new URL(req.url ?? "", "http://localhost");
+  const userId = url.searchParams.get("userId");
+
+  if (!userId) {
+    throw new Error("userId is required.");
+  }
+
+  return userId;
+}
+
+async function ensureUser(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new Error(`User ${userId} was not found.`);
+  }
+
+  return user;
+}
+
+async function getWorkoutProgress(userId: string): Promise<WorkoutProgress> {
+  await ensureUser(userId);
+
   const [state, progressRows] = await Promise.all([
     prisma.workoutState.findUnique({
-      where: { id: "default" },
+      where: { userId },
       include: { currentSession: true },
     }),
     prisma.sessionProgress.findMany({
+      where: { userId },
       include: {
         session: true,
         exercises: {
@@ -196,48 +230,69 @@ async function getSessionExercise(sessionId: string, exerciseName: string) {
   return sessionExercise;
 }
 
-async function ensureSessionProgress(sessionId: string) {
+async function ensureSessionProgress(userId: string, sessionId: string) {
   const session = await getSession(sessionId);
 
   return prisma.sessionProgress.upsert({
-    where: { sessionId: session.id },
-    create: { sessionId: session.id },
+    where: {
+      userId_sessionId: {
+        userId,
+        sessionId: session.id,
+      },
+    },
+    create: { userId, sessionId: session.id },
     update: {},
   });
 }
 
-async function startSession(sessionId: string) {
+async function startSession(userId: string, sessionId: string) {
+  await ensureUser(userId);
   const session = await getSession(sessionId);
 
   await prisma.$transaction([
     prisma.sessionProgress.upsert({
-      where: { sessionId: session.id },
-      create: { sessionId: session.id },
+      where: {
+        userId_sessionId: {
+          userId,
+          sessionId: session.id,
+        },
+      },
+      create: { userId, sessionId: session.id },
       update: {},
     }),
     prisma.workoutState.upsert({
-      where: { id: "default" },
-      create: { id: "default", currentSessionId: session.id },
+      where: { userId },
+      create: {
+        id: `state_${userId}`,
+        userId,
+        currentSessionId: session.id,
+      },
       update: { currentSessionId: session.id },
     }),
   ]);
 }
 
 async function updateLoad(
+  userId: string,
   sessionId: string,
   exerciseName: string,
   load: string,
 ) {
   const [sessionProgress, sessionExercise] = await Promise.all([
-    ensureSessionProgress(sessionId),
+    ensureSessionProgress(userId, sessionId),
     getSessionExercise(sessionId, exerciseName),
   ]);
 
   await prisma.exerciseProgress.upsert({
-    where: { sessionExerciseId: sessionExercise.id },
+    where: {
+      sessionProgressId_sessionExerciseId: {
+        sessionProgressId: sessionProgress.id,
+        sessionExerciseId: sessionExercise.id,
+      },
+    },
     create: {
       sessionExerciseId: sessionExercise.id,
-      sessionProgressId: sessionProgress.sessionId,
+      sessionProgressId: sessionProgress.id,
       load: load.trim() === "" ? null : load,
     },
     update: {
@@ -247,20 +302,26 @@ async function updateLoad(
 }
 
 async function updateCompletedSets(
+  userId: string,
   sessionId: string,
   exerciseName: string,
   completedSets: number,
 ) {
   const [sessionProgress, sessionExercise] = await Promise.all([
-    ensureSessionProgress(sessionId),
+    ensureSessionProgress(userId, sessionId),
     getSessionExercise(sessionId, exerciseName),
   ]);
 
   await prisma.exerciseProgress.upsert({
-    where: { sessionExerciseId: sessionExercise.id },
+    where: {
+      sessionProgressId_sessionExerciseId: {
+        sessionProgressId: sessionProgress.id,
+        sessionExerciseId: sessionExercise.id,
+      },
+    },
     create: {
       sessionExerciseId: sessionExercise.id,
-      sessionProgressId: sessionProgress.sessionId,
+      sessionProgressId: sessionProgress.id,
       completedSets,
     },
     update: {
@@ -269,12 +330,23 @@ async function updateCompletedSets(
   });
 }
 
-async function setSessionCompleted(sessionId: string, completed: boolean) {
+async function setSessionCompleted(
+  userId: string,
+  sessionId: string,
+  completed: boolean,
+) {
+  await ensureUser(userId);
   const session = await getSession(sessionId);
 
   await prisma.sessionProgress.upsert({
-    where: { sessionId: session.id },
+    where: {
+      userId_sessionId: {
+        userId,
+        sessionId: session.id,
+      },
+    },
     create: {
+      userId,
       sessionId: session.id,
       completed,
       completedAt: completed ? new Date() : null,
@@ -287,22 +359,28 @@ async function setSessionCompleted(sessionId: string, completed: boolean) {
 }
 
 async function setExerciseCompleted(
+  userId: string,
   sessionId: string,
   exerciseName: string,
   completed: boolean,
 ) {
   const [sessionProgress, sessionExercise] = await Promise.all([
-    ensureSessionProgress(sessionId),
+    ensureSessionProgress(userId, sessionId),
     getSessionExercise(sessionId, exerciseName),
   ]);
 
   const completedAt = completed ? new Date() : null;
 
   await prisma.exerciseProgress.upsert({
-    where: { sessionExerciseId: sessionExercise.id },
+    where: {
+      sessionProgressId_sessionExerciseId: {
+        sessionProgressId: sessionProgress.id,
+        sessionExerciseId: sessionExercise.id,
+      },
+    },
     create: {
       sessionExerciseId: sessionExercise.id,
-      sessionProgressId: sessionProgress.sessionId,
+      sessionProgressId: sessionProgress.id,
       completed,
       completedAt,
     },
@@ -314,7 +392,7 @@ async function setExerciseCompleted(
 
   const completedCount = await prisma.exerciseProgress.count({
     where: {
-      sessionProgressId: sessionProgress.sessionId,
+      sessionProgressId: sessionProgress.id,
       completed: true,
     },
   });
@@ -323,7 +401,7 @@ async function setExerciseCompleted(
     completedCount === sessionExercise.session.exercises.length;
 
   await prisma.sessionProgress.update({
-    where: { sessionId: sessionProgress.sessionId },
+    where: { id: sessionProgress.id },
     data: {
       completed: allCompleted,
       completedAt: allCompleted ? new Date() : null,
@@ -334,13 +412,19 @@ async function setExerciseCompleted(
 async function runAction(action: ProgressAction) {
   switch (action.type) {
     case "startSession":
-      await startSession(action.sessionId);
+      await startSession(action.userId, action.sessionId);
       return;
     case "updateLoad":
-      await updateLoad(action.sessionId, action.exerciseName, action.load);
+      await updateLoad(
+        action.userId,
+        action.sessionId,
+        action.exerciseName,
+        action.load,
+      );
       return;
     case "updateCompletedSets":
       await updateCompletedSets(
+        action.userId,
         action.sessionId,
         action.exerciseName,
         action.completedSets,
@@ -348,13 +432,18 @@ async function runAction(action: ProgressAction) {
       return;
     case "setExerciseCompleted":
       await setExerciseCompleted(
+        action.userId,
         action.sessionId,
         action.exerciseName,
         action.completed,
       );
       return;
     case "setSessionCompleted":
-      await setSessionCompleted(action.sessionId, action.completed);
+      await setSessionCompleted(
+        action.userId,
+        action.sessionId,
+        action.completed,
+      );
       return;
     default:
       throw new Error("Unsupported progress action.");
@@ -367,7 +456,7 @@ export default async function handler(
 ) {
   try {
     if (req.method === "GET") {
-      sendJson(res, 200, await getWorkoutProgress());
+      sendJson(res, 200, await getWorkoutProgress(getUserIdFromRequest(req)));
       return;
     }
 

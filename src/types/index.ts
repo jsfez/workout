@@ -17,6 +17,11 @@ export interface Session {
   exercises: Exercise[];
 }
 
+export interface UserProfile {
+  id: string;
+  name: string;
+}
+
 export interface SessionProgressSnapshot {
   sessionId: string;
   date: string; // ISO date string

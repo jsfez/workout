@@ -13,6 +13,16 @@ model Program {
   sessions Session[]
 }
 
+model User {
+  id        String            @id
+  name      String            @unique
+  createdAt DateTime          @default(now())
+  state     WorkoutState?
+  progress  SessionProgress[]
+
+  @@map("users")
+}
+
 model Session {
   id            String            @id @default(cuid())
   sourceId      String            @unique
@@ -22,7 +32,7 @@ model Session {
   programId     String
   program       Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
   exercises     SessionExercise[]
-  progress      SessionProgress?
+  progress      SessionProgress[]
   activeInState WorkoutState[]    @relation("CurrentSession")
 
   @@unique([programId, week, day])
@@ -49,7 +59,7 @@ model SessionExercise {
   notes       String
   session     Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   exercise    Exercise          @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
-  progress    ExerciseProgress?
+  progress    ExerciseProgress[]
 
   @@unique([sessionId, position])
   @@unique([sessionId, exerciseId])
@@ -58,25 +68,33 @@ model SessionExercise {
 
 model WorkoutState {
   id               String   @id
+  userId           String   @unique
   currentSessionId String?
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   currentSession   Session? @relation("CurrentSession", fields: [currentSessionId], references: [id], onDelete: SetNull)
   updatedAt        DateTime @updatedAt
 }
 
 model SessionProgress {
-  sessionId   String             @id
+  id          String             @id @default(cuid())
+  userId      String
+  sessionId   String
   startedAt   DateTime           @default(now())
   completed   Boolean            @default(false)
   completedAt DateTime?
   updatedAt   DateTime           @updatedAt
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   session     Session            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   exercises   ExerciseProgress[]
 
+  @@unique([userId, sessionId])
   @@index([completed])
+  @@index([sessionId])
 }
 
 model ExerciseProgress {
-  sessionExerciseId String          @id
+  id                String          @id @default(cuid())
+  sessionExerciseId String
   sessionProgressId String
   load              Decimal?        @db.Decimal(6, 2)
   completedSets     Int             @default(0)
@@ -84,7 +102,9 @@ model ExerciseProgress {
   completedAt       DateTime?
   updatedAt         DateTime        @updatedAt
   sessionExercise   SessionExercise @relation(fields: [sessionExerciseId], references: [id], onDelete: Cascade)
-  sessionProgress   SessionProgress @relation(fields: [sessionProgressId], references: [sessionId], onDelete: Cascade)
+  sessionProgress   SessionProgress @relation(fields: [sessionProgressId], references: [id], onDelete: Cascade)
 
+  @@unique([sessionProgressId, sessionExerciseId])
   @@index([sessionProgressId])
+  @@index([sessionExerciseId])
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Dashboard } from "@/pages/DashboardPage";
 import { ExerciseView } from "@/pages/ExercisePage";
+import { ProfileSelectionPage } from "@/pages/ProfileSelectionPage";
 import { SessionView } from "@/pages/SessionPage";
 import {
   emptyProgress,
@@ -12,7 +13,8 @@ import {
   updateCompletedSets,
   updateLoad,
 } from "./api/workoutProgress";
-import type { Session, WorkoutProgress } from "@/types";
+import { getUsers } from "./api/users";
+import type { Session, UserProfile, WorkoutProgress } from "@/types";
 
 type AppRoute = {
   sessionId: string | null;
@@ -105,6 +107,9 @@ const App = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const sessionsRef = useRef<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [route, setRoute] = useState<AppRoute>(dashboardRoute);
   const [progress, setProgress] = useState<WorkoutProgress>(emptyProgress);
   const progressRef = useRef(progress);
@@ -148,6 +153,8 @@ const App = () => {
 
   const handleStartSession = useCallback(
     (sessionId: string) => {
+      if (!selectedUser) return;
+
       navigate({ sessionId, exerciseIndex: null });
       void mutateProgress(
         (current) =>
@@ -156,15 +163,17 @@ const App = () => {
             sessionId,
             (sessionProgress) => sessionProgress,
           ),
-        () => startSession(sessionId),
+        () => startSession(selectedUser.id, sessionId),
       );
     },
-    [mutateProgress, navigate],
+    [mutateProgress, navigate, selectedUser],
   );
 
   const handleUpdateLoad = useCallback(
-    (sessionId: string, exerciseName: string, load: string) =>
-      mutateProgress(
+    (sessionId: string, exerciseName: string, load: string) => {
+      if (!selectedUser) return Promise.resolve();
+
+      return mutateProgress(
         (current) =>
           updateSessionProgress(current, sessionId, (sessionProgress) => ({
             ...sessionProgress,
@@ -173,14 +182,17 @@ const App = () => {
               [exerciseName]: load,
             },
           })),
-        () => updateLoad(sessionId, exerciseName, load),
-      ),
-    [mutateProgress],
+        () => updateLoad(selectedUser.id, sessionId, exerciseName, load),
+      );
+    },
+    [mutateProgress, selectedUser],
   );
 
   const handleUpdateCompletedSets = useCallback(
-    (sessionId: string, exerciseName: string, completedSets: number) =>
-      mutateProgress(
+    (sessionId: string, exerciseName: string, completedSets: number) => {
+      if (!selectedUser) return Promise.resolve();
+
+      return mutateProgress(
         (current) =>
           updateSessionProgress(current, sessionId, (sessionProgress) => ({
             ...sessionProgress,
@@ -189,14 +201,23 @@ const App = () => {
               [exerciseName]: completedSets,
             },
           })),
-        () => updateCompletedSets(sessionId, exerciseName, completedSets),
-      ),
-    [mutateProgress],
+        () =>
+          updateCompletedSets(
+            selectedUser.id,
+            sessionId,
+            exerciseName,
+            completedSets,
+          ),
+      );
+    },
+    [mutateProgress, selectedUser],
   );
 
   const handleSetExerciseCompleted = useCallback(
-    (sessionId: string, exerciseName: string, completed: boolean) =>
-      mutateProgress(
+    (sessionId: string, exerciseName: string, completed: boolean) => {
+      if (!selectedUser) return Promise.resolve();
+
+      return mutateProgress(
         (current) =>
           updateSessionProgress(current, sessionId, (sessionProgress) => {
             const session = sessions.find((item) => item.id === sessionId);
@@ -216,29 +237,83 @@ const App = () => {
               completedExercises,
             };
           }),
-        () => setExerciseCompleted(sessionId, exerciseName, completed),
-      ),
-    [mutateProgress, sessions],
+        () =>
+          setExerciseCompleted(
+            selectedUser.id,
+            sessionId,
+            exerciseName,
+            completed,
+          ),
+      );
+    },
+    [mutateProgress, selectedUser, sessions],
   );
 
   const handleSetSessionCompleted = useCallback(
-    (sessionId: string, completed: boolean) =>
-      mutateProgress(
+    (sessionId: string, completed: boolean) => {
+      if (!selectedUser) return Promise.resolve();
+
+      return mutateProgress(
         (current) =>
           updateSessionProgress(current, sessionId, (sessionProgress) => ({
             ...sessionProgress,
             date: completed ? nowIso() : sessionProgress.date,
             completed,
           })),
-        () => setSessionCompleted(sessionId, completed),
-      ),
-    [mutateProgress],
+        () => setSessionCompleted(selectedUser.id, sessionId, completed),
+      );
+    },
+    [mutateProgress, selectedUser],
   );
+
+  const handleSelectUser = useCallback((user: UserProfile) => {
+    localStorage.setItem("workout-last-user-id", user.id);
+    setIsLoading(true);
+    setSelectedUser(user);
+  }, []);
+
+  const handleUserCreated = useCallback((user: UserProfile) => {
+    setUsers((current) => [...current, user]);
+  }, []);
+
+  const handleChangeUser = useCallback(() => {
+    setSelectedUser(null);
+    setRoute(dashboardRoute);
+    setProgress(emptyProgress);
+    progressRef.current = emptyProgress;
+    if (window.location.pathname !== "/") {
+      window.history.pushState(null, "", "/");
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
 
-    void Promise.all([getSessions(), getWorkoutProgress()]).then(
+    void getUsers()
+      .then((nextUsers) => {
+        if (!isMounted) return;
+        setUsers(nextUsers);
+      })
+      .catch((error) => {
+        console.warn("Users request failed.", error);
+      })
+      .finally(() => {
+        if (isMounted) setIsProfileLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedUser) {
+      return;
+    }
+
+    let isMounted = true;
+
+    void Promise.all([getSessions(), getWorkoutProgress(selectedUser.id)]).then(
       ([nextSessions, nextProgress]) => {
         if (isMounted) {
           sessionsRef.current = nextSessions;
@@ -254,7 +329,7 @@ const App = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [selectedUser]);
 
   useEffect(() => {
     const handlePopState = () => setRoute(parseRoute(sessionsRef.current));
@@ -268,6 +343,17 @@ const App = () => {
     document.documentElement.classList.toggle("dark", isDarkMode);
     localStorage.setItem("workout-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
+
+  if (!selectedUser) {
+    return (
+      <ProfileSelectionPage
+        users={users}
+        isLoading={isProfileLoading}
+        onUserCreated={handleUserCreated}
+        onSelectUser={handleSelectUser}
+      />
+    );
+  }
 
   if (route.sessionId && route.exerciseIndex !== null) {
     return (
@@ -315,6 +401,8 @@ const App = () => {
       isDarkMode={isDarkMode}
       onToggleTheme={() => setIsDarkMode((current) => !current)}
       progress={progress}
+      currentUser={selectedUser}
+      onChangeUser={handleChangeUser}
     />
   );
 };

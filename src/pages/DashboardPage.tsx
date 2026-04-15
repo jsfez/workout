@@ -1,4 +1,4 @@
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, UserRound } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 
@@ -6,7 +6,7 @@ import { Heading } from "@/components/Heading";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Subtitle } from "@/components/Subtitle";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import type { Session, WorkoutProgress } from "@/types";
+import type { Session, UserProfile, WorkoutProgress } from "@/types";
 import { ProgressSummary } from "@/components/ProgressSummary";
 import { SessionCard, type SessionCardStatus } from "@/components/SessionCard";
 import { NextSessionCard } from "@/components/NextSessionCard";
@@ -20,6 +20,8 @@ interface DashboardProps {
   isDarkMode: boolean;
   onToggleTheme: () => void;
   progress: WorkoutProgress;
+  currentUser: UserProfile;
+  onChangeUser: () => void;
 }
 
 function getSessionStatus(
@@ -50,6 +52,8 @@ export const Dashboard = ({
   isDarkMode,
   onToggleTheme,
   progress,
+  currentUser,
+  onChangeUser,
 }: DashboardProps) => {
   const completedIds = new Set(
     progress.sessions
@@ -86,7 +90,17 @@ export const Dashboard = ({
       <FixedPageHeader>
         <div className="mb-1 flex items-center justify-between gap-4">
           <Brand />
-          <ThemeToggle isDarkMode={isDarkMode} onToggle={onToggleTheme} />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-surface-raised px-3 text-sm font-semibold text-text transition hover:bg-surface-hover"
+              onClick={onChangeUser}
+            >
+              <UserRound className="h-4 w-4 text-primary-light" />
+              {currentUser.name}
+            </button>
+            <ThemeToggle isDarkMode={isDarkMode} onToggle={onToggleTheme} />
+          </div>
         </div>
         <Heading className="mb-1">Mon programme</Heading>
         <Subtitle>8 semaines · 3 séances/semaine</Subtitle>

@@ -5,6 +5,10 @@ import { sessions } from "../src/data/workouts-initial.ts";
 
 const PROGRAM_SLUG = "initial-workout";
 const PROGRAM_NAME = "Initial Workout";
+const INITIAL_USERS = [
+  { id: "user_jeremy", name: "Jeremy" },
+  { id: "user_solal", name: "Solal" },
+];
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -20,6 +24,14 @@ function decimalOrNull(value: string) {
 }
 
 async function main() {
+  for (const user of INITIAL_USERS) {
+    await prisma.user.upsert({
+      where: { id: user.id },
+      create: user,
+      update: { name: user.name },
+    });
+  }
+
   const program = await prisma.program.upsert({
     where: { slug: PROGRAM_SLUG },
     create: {

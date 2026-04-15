@@ -12,6 +12,9 @@ async function expectHeadingAndCapture(
 
 test("test pages", async ({ page }) => {
   await page.goto("/");
+  await expectHeadingAndCapture(page, "Qui s'entraine ?", "profile-selection");
+
+  await page.getByRole("button", { name: "Jeremy", exact: false }).click();
   await expectHeadingAndCapture(page, "Mon programme", "dashboard");
 
   await page
