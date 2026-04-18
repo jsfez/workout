@@ -10,18 +10,52 @@ async function expectHeadingAndCapture(
   await argosScreenshot(page, screenshotName, { fullPage: false });
 }
 
-test("test pages", async ({ page }) => {
+async function openDashboard(page: Page) {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Jeremy", exact: false }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Mon programme",
+  );
+  await expect(page.getByRole("button", { name: /Toutes/ })).toBeVisible();
+}
+
+test("profile selection", async ({ page }) => {
   await page.goto("/");
   await expectHeadingAndCapture(page, "Qui s'entraine ?", "profile-selection");
+});
 
-  await page.getByRole("button", { name: "Jeremy", exact: false }).click();
-  await expectHeadingAndCapture(page, "Mon programme", "dashboard");
+test("dashboard", async ({ page }) => {
+  await openDashboard(page);
+  await argosScreenshot(page, "dashboard", { fullPage: false });
+});
 
-  await page
-    .getByRole("button", { name: "WEEK 1 — #1", exact: false })
-    .click();
+test("dashboard completed filter", async ({ page }) => {
+  await openDashboard(page);
+  await page.getByRole("button", { name: /Terminées/ }).click();
+  await expect(page.getByText("Séances terminées")).toBeVisible();
+  await argosScreenshot(page, "dashboard-completed-filter", {
+    fullPage: false,
+  });
+});
+
+test("dashboard remaining filter", async ({ page }) => {
+  await openDashboard(page);
+  await page.getByRole("button", { name: /Restantes/ }).click();
+  await expect(page.getByText("Séances restantes")).toBeVisible();
+  await argosScreenshot(page, "dashboard-remaining-filter", {
+    fullPage: false,
+  });
+});
+
+test("session page", async ({ page }) => {
+  await openDashboard(page);
+  await page.getByRole("button", { name: "WEEK 1 — #1", exact: false }).click();
   await expectHeadingAndCapture(page, "WEEK 1 — #1", "session-week-1-1");
+});
 
+test("exercise page", async ({ page }) => {
+  await openDashboard(page);
+  await page.getByRole("button", { name: "WEEK 1 — #1", exact: false }).click();
   await page
     .getByRole("button", { name: "Back Squat", exact: false })
     .first()

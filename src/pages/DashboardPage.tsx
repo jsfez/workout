@@ -1,5 +1,6 @@
+import { useMemo, useState } from "react";
 import { Dumbbell, UserRound } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 
 import { Heading } from "@/components/Heading";
@@ -36,6 +37,56 @@ function getSessionStatus(
   return "default";
 }
 
+type SessionFilter = "all" | "completed" | "remaining";
+
+const SESSION_FILTERS: {
+  value: SessionFilter;
+  label: string;
+  getCount: (counts: {
+    completedCount: number;
+    remainingCount: number;
+    totalCount: number;
+  }) => number;
+}[] = [
+  {
+    value: "all",
+    label: "Toutes",
+    getCount: ({ totalCount }) => totalCount,
+  },
+  {
+    value: "completed",
+    label: "Terminées",
+    getCount: ({ completedCount }) => completedCount,
+  },
+  {
+    value: "remaining",
+    label: "Restantes",
+    getCount: ({ remainingCount }) => remainingCount,
+  },
+];
+
+const sessionFilterLabels: Record<SessionFilter, string> = {
+  all: "Toutes les séances",
+  completed: "Séances terminées",
+  remaining: "Séances restantes",
+};
+
+function getFilteredSessions(
+  sessions: Session[],
+  completedIds: Set<string>,
+  activeFilter: SessionFilter,
+) {
+  if (activeFilter === "completed") {
+    return sessions.filter((session) => completedIds.has(session.id));
+  }
+
+  if (activeFilter === "remaining") {
+    return sessions.filter((session) => !completedIds.has(session.id));
+  }
+
+  return sessions;
+}
+
 const Brand = () => (
   <div className="flex items-center gap-2">
     <Dumbbell className="h-5 w-5 text-primary-light" />
@@ -55,10 +106,15 @@ export const Dashboard = ({
   currentUser,
   onChangeUser,
 }: DashboardProps) => {
-  const completedIds = new Set(
-    progress.sessions
-      .filter((item) => item.completed)
-      .map((item) => item.sessionId),
+  const [activeFilter, setActiveFilter] = useState<SessionFilter>("all");
+  const completedIds = useMemo(
+    () =>
+      new Set(
+        progress.sessions
+          .filter((item) => item.completed)
+          .map((item) => item.sessionId),
+      ),
+    [progress.sessions],
   );
 
   const lastCompleted = progress.sessions
@@ -70,7 +126,13 @@ export const Dashboard = ({
 
   const completedCount = completedIds.size;
   const totalCount = sessions.length;
-  const progressPct = Math.round((completedCount / totalCount) * 100);
+  const remainingCount = totalCount - completedCount;
+  const progressPct =
+    totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+  const filteredSessions = useMemo(
+    () => getFilteredSessions(sessions, completedIds, activeFilter),
+    [activeFilter, completedIds, sessions],
+  );
 
   function handleStart(sessionId: string) {
     onSelectSession(sessionId);
@@ -127,13 +189,54 @@ export const Dashboard = ({
             )}
 
             <div className="pb-8 flex-1">
-              <SectionHeading className="mb-3">
-                Toutes les séances
-              </SectionHeading>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <SectionHeading>
+                  {sessionFilterLabels[activeFilter]}
+                </SectionHeading>
+                <span className="text-xs font-medium text-text-faint">
+                  {filteredSessions.length}/{totalCount}
+                </span>
+              </div>
+
+              <div
+                className="mb-4 grid grid-cols-3 gap-1 rounded-xl border border-border bg-surface-muted p-1"
+                aria-label="Filtrer les séances"
+              >
+                {SESSION_FILTERS.map((filter) => {
+                  const isActive = activeFilter === filter.value;
+                  const count = filter.getCount({
+                    completedCount,
+                    remainingCount,
+                    totalCount,
+                  });
+
+                  return (
+                    <button
+                      key={filter.value}
+                      type="button"
+                      className={cn(
+                        "rounded-lg px-2 py-2 text-xs font-semibold transition",
+                        isActive
+                          ? "bg-surface-raised text-text shadow-sm"
+                          : "text-text-subtle hover:bg-surface-hover hover:text-text",
+                      )}
+                      aria-pressed={isActive}
+                      onClick={() => setActiveFilter(filter.value)}
+                    >
+                      <span>{filter.label}</span>
+                      <span className="ml-1 text-text-faint">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
 
               <div className="flex flex-col gap-6">
                 {weeks.map((week) => {
-                  const weekSessions = sessions.filter((s) => s.week === week);
+                  const weekSessions = filteredSessions.filter(
+                    (s) => s.week === week,
+                  );
+
+                  if (weekSessions.length === 0) return null;
 
                   return (
                     <div key={week}>
@@ -173,6 +276,17 @@ export const Dashboard = ({
                   );
                 })}
               </div>
+
+              {filteredSessions.length === 0 && (
+                <div className="rounded-xl border border-dashed border-border bg-surface-raised px-4 py-8 text-center">
+                  <p className="text-sm font-semibold text-text">
+                    Aucune séance ici
+                  </p>
+                  <p className="mt-1 text-sm text-text-subtle">
+                    Change de filtre pour retrouver ton programme.
+                  </p>
+                </div>
+              )}
             </div>
           </>
         )}
