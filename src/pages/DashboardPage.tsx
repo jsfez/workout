@@ -12,6 +12,7 @@ import { SessionCard, type SessionCardStatus } from "@/components/SessionCard";
 import { NextSessionCard } from "@/components/NextSessionCard";
 import { FixedPageHeader } from "@/components/PageHeader";
 import { Page } from "@/components/Page";
+import { Loader } from "@/components/Loader";
 
 interface DashboardProps {
   sessions: Session[];
@@ -108,9 +109,7 @@ export const Dashboard = ({
 
       <Page {...swipeHandlers}>
         {isLoading ? (
-          <div className="flex flex-1 items-center justify-center py-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
-          </div>
+          <Loader centered label="Loading your program" />
         ) : (
           <>
             <ProgressSummary

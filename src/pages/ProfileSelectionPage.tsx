@@ -5,6 +5,7 @@ import { Dumbbell, Plus, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heading } from "@/components/Heading";
+import { Loader } from "@/components/Loader";
 import { Page } from "@/components/Page";
 import { PageHeader } from "@/components/PageHeader";
 import { Subtitle } from "@/components/Subtitle";
@@ -49,9 +50,7 @@ export const ProfileSelectionPage = ({
       setName("");
     } catch (error) {
       setError(
-        error instanceof Error
-          ? error.message
-          : "Unable to add this profile.",
+        error instanceof Error ? error.message : "Unable to add this profile.",
       );
     } finally {
       setIsCreating(false);
@@ -67,9 +66,7 @@ export const ProfileSelectionPage = ({
       </PageHeader>
 
       {isLoading ? (
-        <div className="flex flex-1 items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
-        </div>
+        <Loader centered label="Loading profiles" />
       ) : (
         <>
           <div className="flex flex-col gap-3">
@@ -111,8 +108,20 @@ export const ProfileSelectionPage = ({
                   disabled={!name.trim() || isCreating}
                   type="submit"
                 >
-                  <Plus className="h-4 w-4" />
-                  Add
+                  {isCreating ? (
+                    <Loader
+                      aria-label="Creating profile"
+                      label="Adding..."
+                      labelClassName="text-sm font-semibold text-current"
+                      size="sm"
+                      spinnerClassName="border-white/30 border-t-white"
+                    />
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" />
+                      Add
+                    </>
+                  )}
                 </Button>
               </form>
             </CardContent>
