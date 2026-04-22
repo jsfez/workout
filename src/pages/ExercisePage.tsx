@@ -14,7 +14,7 @@ import { BackButton } from "@/components/BackButton";
 import { Heading } from "@/components/Heading";
 import type { Exercise, Session, WorkoutProgress } from "@/types";
 import { Page } from "@/components/Page";
-import { PageHeader } from "@/components/PageHeader";
+import { FixedPageHeader } from "@/components/PageHeader";
 import { ColoredEmphase } from "@/components/ColoredEmphase";
 import { Label } from "@/components/ui/label";
 import {
@@ -351,7 +351,7 @@ export const ExerciseView = ({
 
   return (
     <Page {...swipeHandlers}>
-      <PageHeader>
+      <FixedPageHeader>
         <BackButton label="Session" onClick={onBack} />
 
         <div className="mb-5 flex items-start justify-between gap-4">
@@ -403,7 +403,7 @@ export const ExerciseView = ({
             </StatCard>
           )}
         </div>
-      </PageHeader>
+      </FixedPageHeader>
 
       {selectedExercise.notes && (
         <Card>

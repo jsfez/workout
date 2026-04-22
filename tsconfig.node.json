@@ -20,5 +20,11 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["*.config.ts", "api/**/*.ts", "prisma/**/*.ts", "vite.config.ts"]
+  "include": [
+    "*.config.ts",
+    "api/**/*.ts",
+    "prisma/**/*.ts",
+    "scripts/**/*.ts",
+    "vite.config.ts"
+  ]
 }
