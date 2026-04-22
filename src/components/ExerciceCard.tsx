@@ -91,12 +91,12 @@ export const ExerciseCard = ({
             <span className="text-base font-bold text-success-foreground">
               {currentLoad} kg
             </span>
-            <span className="text-xs text-success-emphasis">Actuelle</span>
+            <span className="text-xs text-success-emphasis">Current</span>
           </div>
         ) : lastLoad ? (
           <div className="flex flex-col items-end gap-1">
             <span className="text-base">{lastLoad} kg</span>
-            <span className="text-xs ">Dernière</span>
+            <span className="text-xs ">Last</span>
           </div>
         ) : (
           <ChevronRight className="shrink-0 size-4 text-text-faint" />

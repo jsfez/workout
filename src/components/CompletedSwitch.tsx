@@ -24,7 +24,7 @@ export const CompletedSwitch = ({
       className="data-[state=checked]:border-success data-[state=checked]:bg-success"
     />
     <Label htmlFor="session-completed" className="cursor-pointer">
-      Terminée
+      Completed
     </Label>
   </div>
 );

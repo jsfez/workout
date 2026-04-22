@@ -18,12 +18,12 @@ export const NextSessionCard = ({
           <div className="flex items-center gap-1.5 mb-1">
             <Zap className="w-4 h-4 text-primary-foreground" />
             <span className="text-xs font-semibold text-primary-foreground uppercase tracking-wider">
-              Prochaine séance
+              Next session
             </span>
           </div>
           <p className="text-xl font-bold text-white">{session.label}</p>
           <p className="mt-0.5 text-sm text-primary-foreground">
-            {session.exercises.length} exercices
+            {session.exercises.length} exercises
           </p>
         </div>
         <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">

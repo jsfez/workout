@@ -53,7 +53,7 @@ export const ProfileSelectionPage = ({
       setError(
         error instanceof Error
           ? error.message
-          : "Impossible d'ajouter ce profil.",
+          : "Unable to add this profile.",
       );
     } finally {
       setIsCreating(false);
@@ -64,8 +64,8 @@ export const ProfileSelectionPage = ({
     <Page>
       <PageHeader>
         <Brand />
-        <Heading className="mb-1">Qui s'entraine ?</Heading>
-        <Subtitle>Choisis ton profil pour retrouver tes séances.</Subtitle>
+        <Heading className="mb-1">Who's training?</Heading>
+        <Subtitle>Choose your profile to pick up where you left off.</Subtitle>
       </PageHeader>
 
       {isLoading ? (
@@ -94,18 +94,18 @@ export const ProfileSelectionPage = ({
 
           <Card>
             <CardHeader>
-              <CardTitle>Ajouter un profil</CardTitle>
+              <CardTitle>Add profile</CardTitle>
             </CardHeader>
             <CardContent>
               <form className="flex flex-col gap-3" onSubmit={handleCreateUser}>
                 <label className="text-xs font-semibold uppercase tracking-widest text-text-faint">
-                  Prénom
+                  First name
                 </label>
                 <input
                   className="h-11 rounded-xl border border-border bg-surface px-3 text-base text-text outline-none transition placeholder:text-text-faint focus:border-primary"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  placeholder="Nouveau profil"
+                  placeholder="New profile"
                 />
                 {error && <p className="text-sm text-danger">{error}</p>}
                 <Button
@@ -114,7 +114,7 @@ export const ProfileSelectionPage = ({
                   type="submit"
                 >
                   <Plus className="h-4 w-4" />
-                  Ajouter
+                  Add
                 </Button>
               </form>
             </CardContent>

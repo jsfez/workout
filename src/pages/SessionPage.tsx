@@ -32,7 +32,7 @@ const SessionProgress = ({
   return (
     <div className="mt-4">
       <div className="mb-1.5 flex items-center justify-between text-xs text-text-subtle">
-        <div>Progression</div>
+        <div>Progress</div>
         <div>
           {completedExercises}/{totalExercises}
         </div>
@@ -79,11 +79,11 @@ export const SessionView = ({
   return (
     <Page {...swipeHandlers}>
       <FixedPageHeader>
-        <BackButton label="Retour" onClick={onBack} />
+        <BackButton label="Back" onClick={onBack} />
         <div className="flex items-start justify-between gap-3">
           <div>
             <Heading>{session.label}</Heading>
-            <Subtitle>{session.exercises.length} exercices</Subtitle>
+            <Subtitle>{session.exercises.length} exercises</Subtitle>
           </div>
           <CompletedSwitch
             checked={isCompleted}
