@@ -31,21 +31,16 @@ type ProgressAction =
     };
 
 export async function getSessions(): Promise<Session[]> {
-  try {
-    const response = await fetch("/api/sessions");
+  const response = await fetch("/api/sessions");
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(
-        `Sessions request failed with status ${response.status}: ${errorBody}`,
-      );
-    }
-
-    return response.json() as Promise<Session[]>;
-  } catch (error) {
-    console.warn("Sessions request failed.", error);
-    return [];
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Sessions request failed with status ${response.status}: ${errorBody}`,
+    );
   }
+
+  return response.json() as Promise<Session[]>;
 }
 
 export const emptyProgress: WorkoutProgress = {
@@ -56,23 +51,18 @@ export const emptyProgress: WorkoutProgress = {
 export async function getWorkoutProgress(
   userId: string,
 ): Promise<WorkoutProgress> {
-  try {
-    const response = await fetch(
-      `/api/progress?userId=${encodeURIComponent(userId)}`,
+  const response = await fetch(
+    `/api/progress?userId=${encodeURIComponent(userId)}`,
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Progress request failed with status ${response.status}: ${errorBody}`,
     );
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(
-        `Progress request failed with status ${response.status}: ${errorBody}`,
-      );
-    }
-
-    return response.json() as Promise<WorkoutProgress>;
-  } catch (error) {
-    console.warn("Workout progress request failed.", error);
-    return emptyProgress;
   }
+
+  return response.json() as Promise<WorkoutProgress>;
 }
 
 async function sendProgressAction(action: ProgressAction): Promise<void> {
