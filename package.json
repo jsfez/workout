@@ -2,10 +2,12 @@
   "name": "workout",
   "private": true,
   "version": "0.0.0",
+  "packageManager": "pnpm@10.33.0",
   "type": "module",
   "scripts": {
     "start": "vercel dev",
     "dev:vite": "vite",
+    "test:server": "node --experimental-strip-types scripts/playwright-server.ts",
     "build": "prisma generate && tsc -b && vite build",
     "lint": "eslint .",
     "check-types": "tsc --noEmit",
