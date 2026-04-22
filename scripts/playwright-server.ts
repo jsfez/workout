@@ -35,7 +35,7 @@ const server = createHttpServer((req, res) => {
     return;
   }
 
-  vite.middlewares(req, res, (error) => {
+  vite.middlewares(req, res, (error: unknown) => {
     if (error) {
       vite.ssrFixStacktrace(error as Error);
       res.statusCode = 500;
