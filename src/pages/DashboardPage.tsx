@@ -102,8 +102,8 @@ export const Dashboard = ({
             <ThemeToggle isDarkMode={isDarkMode} onToggle={onToggleTheme} />
           </div>
         </div>
-        <Heading className="mb-1">Mon programme</Heading>
-        <Subtitle>8 semaines · 3 séances/semaine</Subtitle>
+        <Heading className="mb-1">My program</Heading>
+        <Subtitle>8 weeks · 3 sessions/week</Subtitle>
       </FixedPageHeader>
 
       <Page {...swipeHandlers}>
@@ -127,9 +127,7 @@ export const Dashboard = ({
             )}
 
             <div className="pb-8 flex-1">
-              <SectionHeading className="mb-3">
-                Toutes les séances
-              </SectionHeading>
+              <SectionHeading className="mb-3">All sessions</SectionHeading>
 
               <div className="flex flex-col gap-6">
                 {weeks.map((week) => {
@@ -138,7 +136,7 @@ export const Dashboard = ({
                   return (
                     <div key={week}>
                       <p className="mb-2 text-xs font-semibold text-text-faint uppercase tracking-widest">
-                        Semaine {week}
+                        Week {week}
                       </p>
 
                       <div className="flex flex-col gap-2">
@@ -161,7 +159,7 @@ export const Dashboard = ({
                               meta={
                                 sessionProgress?.date
                                   ? formatDate(sessionProgress.date)
-                                  : `${session.exercises.length} exercices`
+                                  : `${session.exercises.length} exercises`
                               }
                               status={status}
                               onClick={() => handleStart(session.id)}

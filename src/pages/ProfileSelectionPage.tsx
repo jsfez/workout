@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Dumbbell, Plus, UserRound } from "lucide-react";
 
-import { createUser } from "@/api/users";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heading } from "@/components/Heading";
@@ -14,7 +13,7 @@ import type { UserProfile } from "@/types";
 interface ProfileSelectionPageProps {
   users: UserProfile[];
   isLoading: boolean;
-  onUserCreated: (user: UserProfile) => void;
+  onCreateUser: (name: string) => Promise<UserProfile>;
   onSelectUser: (user: UserProfile) => void;
 }
 
@@ -30,7 +29,7 @@ const Brand = () => (
 export const ProfileSelectionPage = ({
   users,
   isLoading,
-  onUserCreated,
+  onCreateUser,
   onSelectUser,
 }: ProfileSelectionPageProps) => {
   const [name, setName] = useState("");
@@ -46,9 +45,8 @@ export const ProfileSelectionPage = ({
     setError(null);
 
     try {
-      const user = await createUser(name);
+      await onCreateUser(name);
       setName("");
-      onUserCreated(user);
     } catch (error) {
       setError(
         error instanceof Error

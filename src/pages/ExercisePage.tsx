@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getLastLoadForExercise } from "@/api/workoutProgress";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -26,7 +24,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PageFooter } from "@/components/PageFooter";
 import { CompletedSwitch } from "@/components/CompletedSwitch";
 import { OtherExerciseCard } from "@/components/OtherExerciceCard";
 import { TimerCard } from "../components/TimerCard";
@@ -186,49 +183,6 @@ const SessionExerciseList = ({
   );
 };
 
-const PreviousButton = ({
-  onClick,
-  disabled,
-}: {
-  onClick: () => void;
-  disabled: boolean;
-}) => (
-  <Button
-    variant="secondary"
-    size="lg"
-    onClick={onClick}
-    disabled={disabled}
-    className="flex items-center gap-2 flex-1"
-  >
-    <ChevronLeft className="h-4 w-4" />
-    Previous
-  </Button>
-);
-
-const NextButton = ({
-  onClick,
-  hasNext,
-}: {
-  onClick: () => void;
-  hasNext: boolean;
-}) => (
-  <Button
-    variant="primary"
-    size="lg"
-    onClick={onClick}
-    className="flex items-center gap-2 flex-1"
-  >
-    {hasNext ? (
-      <>
-        <>Next</>
-        <ChevronRight className="ml-2 h-4 w-4" />
-      </>
-    ) : (
-      "Save"
-    )}
-  </Button>
-);
-
 export const ExerciseView = ({
   sessions,
   sessionId,
@@ -264,8 +218,6 @@ export const ExerciseView = ({
     sessionId,
     allSessionIds,
   );
-
-  const [loadInput, setLoadInput] = useState(savedLoad);
   const [restTimer, setRestTimer] = useState<{
     exerciseKey: string;
     endAt: number;
@@ -295,10 +247,6 @@ export const ExerciseView = ({
     selectedExercise.maxLoad,
     selectedExercise.programLoad,
   ]);
-
-  async function saveLoad() {
-    await onUpdateLoad(sessionId, selectedExercise.name, loadInput);
-  }
 
   async function handleCompletedChange(checked: boolean) {
     await onSetExerciseCompleted(sessionId, selectedExercise.name, checked);
@@ -330,8 +278,12 @@ export const ExerciseView = ({
     setRestTimerRemainingMs(0);
   }
 
+  function handleLoadChange(load: string) {
+    if (load === savedLoad) return;
+    void onUpdateLoad(sessionId, selectedExercise.name, load);
+  }
+
   function goToExercise(index: number) {
-    void saveLoad();
     onSelectExercise(index);
   }
 
@@ -347,25 +299,6 @@ export const ExerciseView = ({
       if (nextIndex !== null) goToExercise(nextIndex);
     },
   });
-
-  const hasNext = nextIndex !== null;
-
-  const handlePrevious = () => {
-    if (previousIndex === null) {
-      onBack();
-    } else {
-      goToExercise(previousIndex);
-    }
-  };
-
-  const handleNext = () => {
-    if (nextIndex !== null) {
-      goToExercise(nextIndex);
-    } else {
-      void saveLoad();
-      onBack();
-    }
-  };
 
   const activeRestTimerEndAt =
     restTimer?.exerciseKey === selectedExerciseKey ? restTimer.endAt : null;
@@ -482,9 +415,9 @@ export const ExerciseView = ({
       )}
 
       <LoadSelector
-        value={loadInput}
+        value={savedLoad}
         options={loadOptions}
-        onValueChange={setLoadInput}
+        onValueChange={handleLoadChange}
       />
 
       <SessionExerciseList
@@ -493,16 +426,6 @@ export const ExerciseView = ({
         completedExercises={completedExercises}
         onSelectExercise={goToExercise}
       />
-
-      <PageFooter>
-        <div className="flex items-center justify-between gap-2">
-          <PreviousButton
-            onClick={handlePrevious}
-            disabled={previousIndex === null}
-          />
-          <NextButton onClick={handleNext} hasNext={hasNext} />
-        </div>
-      </PageFooter>
     </Page>
   );
 };

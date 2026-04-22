@@ -1,8 +1,15 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dashboard } from "@/pages/DashboardPage";
 import { ExerciseView } from "@/pages/ExercisePage";
 import { ProfileSelectionPage } from "@/pages/ProfileSelectionPage";
 import { SessionView } from "@/pages/SessionPage";
+import { Button } from "@/components/ui/button";
+import { Heading } from "@/components/Heading";
+import { Page } from "@/components/Page";
+import { PageHeader } from "@/components/PageHeader";
+import { Subtitle } from "@/components/Subtitle";
+import { queryKeys } from "@/lib/queryKeys";
 import {
   emptyProgress,
   getSessions,
@@ -13,7 +20,7 @@ import {
   updateCompletedSets,
   updateLoad,
 } from "./api/workoutProgress";
-import { getUsers } from "./api/users";
+import { createUser, getUsers } from "./api/users";
 import type { Session, UserProfile, WorkoutProgress } from "@/types";
 
 type AppRoute = {
@@ -25,6 +32,8 @@ const dashboardRoute: AppRoute = {
   sessionId: null,
   exerciseIndex: null,
 };
+
+const LAST_USER_ID_STORAGE_KEY = "workout-last-user-id";
 
 function parseRoute(sessions: Session[]): AppRoute {
   const [, resource, sessionId, nestedResource, exerciseIndex] =
@@ -103,21 +112,95 @@ function updateSessionProgress(
   };
 }
 
+type ProgressMutationContext = {
+  previousProgress: WorkoutProgress;
+  queryKey: ReturnType<typeof queryKeys.progress>;
+};
+
+type StartSessionVariables = {
+  sessionId: string;
+};
+
+type UpdateLoadVariables = {
+  sessionId: string;
+  exerciseName: string;
+  load: string;
+};
+
+type UpdateCompletedSetsVariables = {
+  sessionId: string;
+  exerciseName: string;
+  completedSets: number;
+};
+
+type SetExerciseCompletedVariables = {
+  sessionId: string;
+  exerciseName: string;
+  completed: boolean;
+};
+
+type SetSessionCompletedVariables = {
+  sessionId: string;
+  completed: boolean;
+};
+
+const ErrorState = ({
+  title,
+  message,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  message: string;
+  actionLabel: string;
+  onAction: () => void;
+}) => (
+  <Page>
+    <PageHeader>
+      <Heading className="mb-1">{title}</Heading>
+      <Subtitle>{message}</Subtitle>
+    </PageHeader>
+    <Button type="button" onClick={onAction}>
+      {actionLabel}
+    </Button>
+  </Page>
+);
+
 const App = () => {
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const queryClient = useQueryClient();
   const sessionsRef = useRef<Session[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isProfileLoading, setIsProfileLoading] = useState(true);
-  const [users, setUsers] = useState<UserProfile[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [route, setRoute] = useState<AppRoute>(dashboardRoute);
-  const [progress, setProgress] = useState<WorkoutProgress>(emptyProgress);
-  const progressRef = useRef(progress);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const storedTheme = localStorage.getItem("workout-theme");
     if (storedTheme) return storedTheme === "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
+  const selectedUserId = selectedUser?.id ?? null;
+
+  const usersQuery = useQuery({
+    queryKey: queryKeys.users,
+    queryFn: getUsers,
+  });
+  const sessionsQuery = useQuery({
+    queryKey: queryKeys.sessions,
+    queryFn: getSessions,
+    enabled: selectedUserId !== null,
+  });
+  const progressQuery = useQuery({
+    queryKey: selectedUserId
+      ? queryKeys.progress(selectedUserId)
+      : (["progress", "no-user"] as const),
+    queryFn: () => getWorkoutProgress(selectedUserId ?? ""),
+    enabled: selectedUserId !== null,
+  });
+
+  const users = usersQuery.data ?? [];
+  const sessions = sessionsQuery.data ?? [];
+  const progress = progressQuery.data ?? emptyProgress;
+  const isWorkoutLoading =
+    selectedUserId !== null &&
+    (sessionsQuery.isPending || progressQuery.isPending);
 
   const navigate = useCallback((nextRoute: AppRoute) => {
     const nextPath = getRoutePath(nextRoute);
@@ -129,207 +212,274 @@ const App = () => {
     setRoute(nextRoute);
   }, []);
 
-  const mutateProgress = useCallback(
+  const applyProgressOptimisticUpdate = useCallback(
     async (
-      optimisticUpdate: (current: WorkoutProgress) => WorkoutProgress,
-      mutation: () => Promise<void>,
-    ) => {
-      const previousProgress = progressRef.current;
-      const nextProgress = optimisticUpdate(previousProgress);
+      update: (current: WorkoutProgress) => WorkoutProgress,
+    ): Promise<ProgressMutationContext | undefined> => {
+      if (!selectedUserId) return undefined;
 
-      progressRef.current = nextProgress;
-      setProgress(nextProgress);
+      const queryKey = queryKeys.progress(selectedUserId);
+      await queryClient.cancelQueries({ queryKey });
 
-      try {
-        await mutation();
-      } catch (error) {
-        console.warn("Workout progress mutation failed.", error);
-        progressRef.current = previousProgress;
-        setProgress(previousProgress);
-      }
+      const previousProgress =
+        queryClient.getQueryData<WorkoutProgress>(queryKey) ?? emptyProgress;
+
+      queryClient.setQueryData(queryKey, update(previousProgress));
+
+      return {
+        previousProgress,
+        queryKey,
+      };
     },
-    [],
+    [queryClient, selectedUserId],
+  );
+
+  const restoreProgress = useCallback(
+    (context?: ProgressMutationContext) => {
+      if (!context) return;
+      queryClient.setQueryData(context.queryKey, context.previousProgress);
+    },
+    [queryClient],
+  );
+
+  const invalidateProgress = useCallback(() => {
+    if (!selectedUserId) return;
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.progress(selectedUserId),
+    });
+  }, [queryClient, selectedUserId]);
+
+  const createUserMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: (user) => {
+      queryClient.setQueryData<UserProfile[]>(queryKeys.users, (current = []) =>
+        current.some((item) => item.id === user.id) ? current : [...current, user],
+      );
+    },
+  });
+
+  const startSessionMutation = useMutation({
+    mutationFn: async ({ sessionId }: StartSessionVariables) => {
+      if (!selectedUserId) return;
+      await startSession(selectedUserId, sessionId);
+    },
+    onMutate: ({ sessionId }) =>
+      applyProgressOptimisticUpdate((current) =>
+        updateSessionProgress(
+          { ...current, currentSessionId: sessionId },
+          sessionId,
+          (sessionProgress) => sessionProgress,
+        ),
+      ),
+    onError: (error, _variables, context) => {
+      console.warn("Workout progress mutation failed.", error);
+      restoreProgress(context);
+    },
+    onSettled: invalidateProgress,
+  });
+
+  const updateLoadMutation = useMutation({
+    mutationFn: async ({
+      sessionId,
+      exerciseName,
+      load,
+    }: UpdateLoadVariables) => {
+      if (!selectedUserId) return;
+      await updateLoad(selectedUserId, sessionId, exerciseName, load);
+    },
+    onMutate: ({ sessionId, exerciseName, load }) =>
+      applyProgressOptimisticUpdate((current) =>
+        updateSessionProgress(current, sessionId, (sessionProgress) => ({
+          ...sessionProgress,
+          loads: {
+            ...sessionProgress.loads,
+            [exerciseName]: load,
+          },
+        })),
+      ),
+    onError: (error, _variables, context) => {
+      console.warn("Workout progress mutation failed.", error);
+      restoreProgress(context);
+    },
+    onSettled: invalidateProgress,
+  });
+
+  const updateCompletedSetsMutation = useMutation({
+    mutationFn: async ({
+      sessionId,
+      exerciseName,
+      completedSets,
+    }: UpdateCompletedSetsVariables) => {
+      if (!selectedUserId) return;
+      await updateCompletedSets(
+        selectedUserId,
+        sessionId,
+        exerciseName,
+        completedSets,
+      );
+    },
+    onMutate: ({ sessionId, exerciseName, completedSets }) =>
+      applyProgressOptimisticUpdate((current) =>
+        updateSessionProgress(current, sessionId, (sessionProgress) => ({
+          ...sessionProgress,
+          completedSets: {
+            ...sessionProgress.completedSets,
+            [exerciseName]: completedSets,
+          },
+        })),
+      ),
+    onError: (error, _variables, context) => {
+      console.warn("Workout progress mutation failed.", error);
+      restoreProgress(context);
+    },
+    onSettled: invalidateProgress,
+  });
+
+  const setExerciseCompletedMutation = useMutation({
+    mutationFn: async ({
+      sessionId,
+      exerciseName,
+      completed,
+    }: SetExerciseCompletedVariables) => {
+      if (!selectedUserId) return;
+      await setExerciseCompleted(
+        selectedUserId,
+        sessionId,
+        exerciseName,
+        completed,
+      );
+    },
+    onMutate: ({ sessionId, exerciseName, completed }) =>
+      applyProgressOptimisticUpdate((current) =>
+        updateSessionProgress(current, sessionId, (sessionProgress) => {
+          const session = sessions.find((item) => item.id === sessionId);
+          const completedExercises = {
+            ...sessionProgress.completedExercises,
+            [exerciseName]: completed,
+          };
+          const allCompleted =
+            session?.exercises.every(
+              (exercise) => completedExercises[exercise.name],
+            ) ?? false;
+
+          return {
+            ...sessionProgress,
+            date: allCompleted ? nowIso() : sessionProgress.date,
+            completed: allCompleted,
+            completedExercises,
+          };
+        }),
+      ),
+    onError: (error, _variables, context) => {
+      console.warn("Workout progress mutation failed.", error);
+      restoreProgress(context);
+    },
+    onSettled: invalidateProgress,
+  });
+
+  const setSessionCompletedMutation = useMutation({
+    mutationFn: async ({
+      sessionId,
+      completed,
+    }: SetSessionCompletedVariables) => {
+      if (!selectedUserId) return;
+      await setSessionCompleted(selectedUserId, sessionId, completed);
+    },
+    onMutate: ({ sessionId, completed }) =>
+      applyProgressOptimisticUpdate((current) =>
+        updateSessionProgress(current, sessionId, (sessionProgress) => ({
+          ...sessionProgress,
+          date: completed ? nowIso() : sessionProgress.date,
+          completed,
+        })),
+      ),
+    onError: (error, _variables, context) => {
+      console.warn("Workout progress mutation failed.", error);
+      restoreProgress(context);
+    },
+    onSettled: invalidateProgress,
+  });
+
+  const handleCreateUser = useCallback(
+    (name: string) => createUserMutation.mutateAsync(name),
+    [createUserMutation],
   );
 
   const handleStartSession = useCallback(
     (sessionId: string) => {
-      if (!selectedUser) return;
+      if (!selectedUserId) return;
 
       navigate({ sessionId, exerciseIndex: null });
-      void mutateProgress(
-        (current) =>
-          updateSessionProgress(
-            { ...current, currentSessionId: sessionId },
-            sessionId,
-            (sessionProgress) => sessionProgress,
-          ),
-        () => startSession(selectedUser.id, sessionId),
-      );
+      void startSessionMutation.mutateAsync({ sessionId });
     },
-    [mutateProgress, navigate, selectedUser],
+    [navigate, selectedUserId, startSessionMutation],
   );
 
   const handleUpdateLoad = useCallback(
     (sessionId: string, exerciseName: string, load: string) => {
-      if (!selectedUser) return Promise.resolve();
+      if (!selectedUserId) return Promise.resolve();
 
-      return mutateProgress(
-        (current) =>
-          updateSessionProgress(current, sessionId, (sessionProgress) => ({
-            ...sessionProgress,
-            loads: {
-              ...sessionProgress.loads,
-              [exerciseName]: load,
-            },
-          })),
-        () => updateLoad(selectedUser.id, sessionId, exerciseName, load),
-      );
+      return updateLoadMutation.mutateAsync({ sessionId, exerciseName, load });
     },
-    [mutateProgress, selectedUser],
+    [selectedUserId, updateLoadMutation],
   );
 
   const handleUpdateCompletedSets = useCallback(
     (sessionId: string, exerciseName: string, completedSets: number) => {
-      if (!selectedUser) return Promise.resolve();
+      if (!selectedUserId) return Promise.resolve();
 
-      return mutateProgress(
-        (current) =>
-          updateSessionProgress(current, sessionId, (sessionProgress) => ({
-            ...sessionProgress,
-            completedSets: {
-              ...sessionProgress.completedSets,
-              [exerciseName]: completedSets,
-            },
-          })),
-        () =>
-          updateCompletedSets(
-            selectedUser.id,
-            sessionId,
-            exerciseName,
-            completedSets,
-          ),
-      );
+      return updateCompletedSetsMutation.mutateAsync({
+        sessionId,
+        exerciseName,
+        completedSets,
+      });
     },
-    [mutateProgress, selectedUser],
+    [selectedUserId, updateCompletedSetsMutation],
   );
 
   const handleSetExerciseCompleted = useCallback(
     (sessionId: string, exerciseName: string, completed: boolean) => {
-      if (!selectedUser) return Promise.resolve();
+      if (!selectedUserId) return Promise.resolve();
 
-      return mutateProgress(
-        (current) =>
-          updateSessionProgress(current, sessionId, (sessionProgress) => {
-            const session = sessions.find((item) => item.id === sessionId);
-            const completedExercises = {
-              ...sessionProgress.completedExercises,
-              [exerciseName]: completed,
-            };
-            const allCompleted =
-              session?.exercises.every(
-                (exercise) => completedExercises[exercise.name],
-              ) ?? false;
-
-            return {
-              ...sessionProgress,
-              date: allCompleted ? nowIso() : sessionProgress.date,
-              completed: allCompleted,
-              completedExercises,
-            };
-          }),
-        () =>
-          setExerciseCompleted(
-            selectedUser.id,
-            sessionId,
-            exerciseName,
-            completed,
-          ),
-      );
+      return setExerciseCompletedMutation.mutateAsync({
+        sessionId,
+        exerciseName,
+        completed,
+      });
     },
-    [mutateProgress, selectedUser, sessions],
+    [selectedUserId, setExerciseCompletedMutation],
   );
 
   const handleSetSessionCompleted = useCallback(
     (sessionId: string, completed: boolean) => {
-      if (!selectedUser) return Promise.resolve();
+      if (!selectedUserId) return Promise.resolve();
 
-      return mutateProgress(
-        (current) =>
-          updateSessionProgress(current, sessionId, (sessionProgress) => ({
-            ...sessionProgress,
-            date: completed ? nowIso() : sessionProgress.date,
-            completed,
-          })),
-        () => setSessionCompleted(selectedUser.id, sessionId, completed),
-      );
+      return setSessionCompletedMutation.mutateAsync({
+        sessionId,
+        completed,
+      });
     },
-    [mutateProgress, selectedUser],
+    [selectedUserId, setSessionCompletedMutation],
   );
 
   const handleSelectUser = useCallback((user: UserProfile) => {
-    localStorage.setItem("workout-last-user-id", user.id);
-    setIsLoading(true);
+    localStorage.setItem(LAST_USER_ID_STORAGE_KEY, user.id);
+    setRoute(dashboardRoute);
     setSelectedUser(user);
   }, []);
 
-  const handleUserCreated = useCallback((user: UserProfile) => {
-    setUsers((current) => [...current, user]);
-  }, []);
-
   const handleChangeUser = useCallback(() => {
+    localStorage.removeItem(LAST_USER_ID_STORAGE_KEY);
     setSelectedUser(null);
     setRoute(dashboardRoute);
-    setProgress(emptyProgress);
-    progressRef.current = emptyProgress;
     if (window.location.pathname !== "/") {
       window.history.pushState(null, "", "/");
     }
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-
-    void getUsers()
-      .then((nextUsers) => {
-        if (!isMounted) return;
-        setUsers(nextUsers);
-      })
-      .catch((error) => {
-        console.warn("Users request failed.", error);
-      })
-      .finally(() => {
-        if (isMounted) setIsProfileLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!selectedUser) {
-      return;
-    }
-
-    let isMounted = true;
-
-    void Promise.all([getSessions(), getWorkoutProgress(selectedUser.id)]).then(
-      ([nextSessions, nextProgress]) => {
-        if (isMounted) {
-          sessionsRef.current = nextSessions;
-          setSessions(nextSessions);
-          progressRef.current = nextProgress;
-          setProgress(nextProgress);
-          setRoute(parseRoute(nextSessions));
-          setIsLoading(false);
-        }
-      },
-    );
-
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedUser]);
+    sessionsRef.current = sessions;
+  }, [sessions]);
 
   useEffect(() => {
     const handlePopState = () => setRoute(parseRoute(sessionsRef.current));
@@ -344,13 +494,96 @@ const App = () => {
     localStorage.setItem("workout-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
+  useEffect(() => {
+    if (selectedUser || !usersQuery.isSuccess) return;
+
+    const storedUserId = localStorage.getItem(LAST_USER_ID_STORAGE_KEY);
+
+    if (!storedUserId) return;
+
+    const storedUser = users.find((user) => user.id === storedUserId);
+
+    if (storedUser) {
+      setSelectedUser(storedUser);
+    }
+  }, [selectedUser, users, usersQuery.isSuccess]);
+
+  useEffect(() => {
+    if (
+      !selectedUserId ||
+      !sessionsQuery.isSuccess ||
+      !progressQuery.isSuccess
+    ) {
+      return;
+    }
+
+    setRoute(parseRoute(sessions));
+  }, [
+    progressQuery.isSuccess,
+    selectedUserId,
+    sessions,
+    sessionsQuery.isSuccess,
+  ]);
+
   if (!selectedUser) {
+    if (usersQuery.isError) {
+      return (
+        <ErrorState
+          title="Unable to load profiles"
+          message={
+            usersQuery.error instanceof Error
+              ? usersQuery.error.message
+              : "Please try again."
+          }
+          actionLabel="Retry"
+          onAction={() => {
+            void usersQuery.refetch();
+          }}
+        />
+      );
+    }
+
     return (
       <ProfileSelectionPage
         users={users}
-        isLoading={isProfileLoading}
-        onUserCreated={handleUserCreated}
+        isLoading={usersQuery.isPending}
+        onCreateUser={handleCreateUser}
         onSelectUser={handleSelectUser}
+      />
+    );
+  }
+
+  if (sessionsQuery.isError || progressQuery.isError) {
+    const error =
+      sessionsQuery.error instanceof Error
+        ? sessionsQuery.error
+        : progressQuery.error instanceof Error
+          ? progressQuery.error
+          : null;
+
+    return (
+      <ErrorState
+        title="Unable to load your training data"
+        message={error?.message ?? "Please try again."}
+        actionLabel="Retry"
+        onAction={() => {
+          void Promise.all([sessionsQuery.refetch(), progressQuery.refetch()]);
+        }}
+      />
+    );
+  }
+
+  if (isWorkoutLoading) {
+    return (
+      <Dashboard
+        sessions={sessions}
+        isLoading
+        onSelectSession={handleStartSession}
+        isDarkMode={isDarkMode}
+        onToggleTheme={() => setIsDarkMode((current) => !current)}
+        progress={progress}
+        currentUser={selectedUser}
+        onChangeUser={handleChangeUser}
       />
     );
   }
@@ -396,7 +629,7 @@ const App = () => {
   return (
     <Dashboard
       sessions={sessions}
-      isLoading={isLoading}
+      isLoading={false}
       onSelectSession={handleStartSession}
       isDarkMode={isDarkMode}
       onToggleTheme={() => setIsDarkMode((current) => !current)}
