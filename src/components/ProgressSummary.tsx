@@ -18,7 +18,7 @@ export const ProgressSummary = ({
   return (
     <Card className={cn("rounded-2xl p-4", className)}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-text">Progression</span>
+        <span className="text-sm font-medium text-text">Progress</span>
         <span className="text-sm font-bold text-primary-light">
           {completedCount}/{totalCount}
         </span>
@@ -26,7 +26,7 @@ export const ProgressSummary = ({
       <Progress value={progressPct} className="h-2" />
       {lastCompletedLabel && (
         <p className="mt-2 text-xs text-text-subtle">
-          Dernière séance : {lastCompletedLabel}
+          Last session: {lastCompletedLabel}
         </p>
       )}
     </Card>

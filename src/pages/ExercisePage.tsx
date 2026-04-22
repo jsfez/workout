@@ -124,10 +124,10 @@ const LoadSelector = ({
 }) => {
   return (
     <div className="flex flex-col gap-2">
-      <Label>Charge utilisée (kg)</Label>
+      <Label>Weight used (kg)</Label>
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger>
-          <SelectValue placeholder="Choisir une charge" />
+          <SelectValue placeholder="Choose a weight" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
@@ -164,7 +164,7 @@ const SessionExerciseList = ({
   return (
     <Card className="mb-24">
       <CardHeader>
-        <CardTitle>Encore à faire</CardTitle>
+        <CardTitle>Still to do</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {exercises.map((exercise, index) => {
@@ -201,7 +201,7 @@ const PreviousButton = ({
     className="flex items-center gap-2 flex-1"
   >
     <ChevronLeft className="h-4 w-4" />
-    Précédent
+    Previous
   </Button>
 );
 
@@ -220,11 +220,11 @@ const NextButton = ({
   >
     {hasNext ? (
       <>
-        <>Suivant</>
+        <>Next</>
         <ChevronRight className="ml-2 h-4 w-4" />
       </>
     ) : (
-      "Enregistrer"
+      "Save"
     )}
   </Button>
 );
@@ -419,12 +419,12 @@ export const ExerciseView = ({
   return (
     <Page {...swipeHandlers}>
       <PageHeader>
-        <BackButton label="Séance" onClick={onBack} />
+        <BackButton label="Session" onClick={onBack} />
 
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <ColoredEmphase>
-              Exercice {`${exerciseIndex + 1}/${session.exercises.length}`}
+              Exercise {`${exerciseIndex + 1}/${session.exercises.length}`}
             </ColoredEmphase>
             <Heading>{selectedExercise.name}</Heading>
           </div>
@@ -439,7 +439,7 @@ export const ExerciseView = ({
           <button
             type="button"
             onClick={handleCompletedSetsClick}
-            aria-label={`Modifier les séries effectuées pour ${selectedExercise.name}`}
+            aria-label={`Update completed sets for ${selectedExercise.name}`}
             className="flex-1"
           >
             <StatCard>
@@ -459,14 +459,14 @@ export const ExerciseView = ({
             isRunning={activeRestTimerEndAt !== null}
             onStart={handleRestTimerClick}
             onStop={handleStopRestTimerClick}
-            ariaLabel={`Démarrer le timer de repos pour ${selectedExercise.name}`}
+            ariaLabel={`Start rest timer for ${selectedExercise.name}`}
           />
           {lastLoad && (
             <StatCard>
               <StatCardValue className="text-primary">
-                `${lastLoad} kg`
+                {`${lastLoad} kg`}
               </StatCardValue>
-              <StatCardLabel>Dernière charge</StatCardLabel>
+              <StatCardLabel>Last weight</StatCardLabel>
             </StatCard>
           )}
         </div>
@@ -475,7 +475,7 @@ export const ExerciseView = ({
       {selectedExercise.notes && (
         <Card>
           <CardHeader>
-            <CardTitle>Conseils</CardTitle>
+            <CardTitle>Tips</CardTitle>
             <CardDescription>{selectedExercise.notes}</CardDescription>
           </CardHeader>
         </Card>

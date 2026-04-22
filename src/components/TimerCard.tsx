@@ -24,7 +24,7 @@ export const TimerCard = ({
           type="button"
           className="absolute right-2 top-2 grid size-5 place-items-center rounded-full bg-surface-muted text-text-muted transition-colors hover:bg-surface-hover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           onClick={onStop}
-          aria-label="Arrêter le timer de repos"
+          aria-label="Stop rest timer"
         >
           <XIcon className="size-3" />
         </button>

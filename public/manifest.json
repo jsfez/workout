@@ -1,7 +1,7 @@
 {
   "name": "Workout Tracker",
   "short_name": "Workout",
-  "description": "Suivi de séances de musculation",
+  "description": "Track your strength training sessions",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0f",
