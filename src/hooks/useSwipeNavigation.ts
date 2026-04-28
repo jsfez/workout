@@ -47,9 +47,9 @@ export function useSwipeNavigation({
     }, 250);
 
     if (deltaX < 0) {
-      onSwipeLeft?.();
-    } else {
       onSwipeRight?.();
+    } else {
+      onSwipeLeft?.();
     }
   };
 

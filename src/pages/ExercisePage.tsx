@@ -288,15 +288,8 @@ export const ExerciseView = ({
   }
 
   const swipeHandlers = useSwipeNavigation({
-    onSwipeRight: () => {
-      if (previousIndex === null) {
-        onBack();
-      } else {
-        goToExercise(previousIndex);
-      }
-    },
     onSwipeLeft: () => {
-      if (nextIndex !== null) goToExercise(nextIndex);
+      onBack();
     },
   });
 

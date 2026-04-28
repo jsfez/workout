@@ -66,14 +66,8 @@ export const SessionView = ({
     (ex) => completedExerciseMap[ex.name],
   ).length;
 
-  const firstIncompleteIndex = session.exercises.findIndex(
-    (ex) => !completedExerciseMap[ex.name],
-  );
-
   const swipeHandlers = useSwipeNavigation({
-    onSwipeRight: onBack,
-    onSwipeLeft: () =>
-      onSelectExercise(firstIncompleteIndex === -1 ? 0 : firstIncompleteIndex),
+    onSwipeLeft: onBack,
   });
 
   return (

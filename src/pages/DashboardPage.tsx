@@ -1,6 +1,5 @@
 import { Dumbbell, UserRound } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 
 import { Heading } from "@/components/Heading";
 import { SectionHeading } from "@/components/SectionHeading";
@@ -77,12 +76,6 @@ export const Dashboard = ({
     onSelectSession(sessionId);
   }
 
-  const swipeHandlers = useSwipeNavigation({
-    onSwipeLeft: () => {
-      if (nextSession) handleStart(nextSession.id);
-    },
-  });
-
   // Group sessions by week
   const weeks = Array.from({ length: 8 }, (_, i) => i + 1);
 
@@ -107,7 +100,7 @@ export const Dashboard = ({
         <Subtitle>8 weeks · 3 sessions/week</Subtitle>
       </FixedPageHeader>
 
-      <Page {...swipeHandlers}>
+      <Page>
         {isLoading ? (
           <Loader centered label="Loading your program" />
         ) : (
