@@ -16,7 +16,7 @@ export const ExerciseMetaCards = ({
       </StatCard>
 
       {lastLoad && (
-        <StatCard variant="outline">
+        <StatCard variant="outline" className="bg-surface">
           <DumbbellIcon className="size-3" />
           {lastLoad} kg
         </StatCard>

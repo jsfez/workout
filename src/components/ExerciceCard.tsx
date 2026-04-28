@@ -40,12 +40,6 @@ const CardStatusIndicator = ({
   );
 };
 
-const Badges = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <div className="ml-8 flex flex-wrap items-center gap-2">{children}</div>
-  );
-};
-
 export const ExerciseCard = ({
   exercise,
   index,

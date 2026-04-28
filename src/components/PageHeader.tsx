@@ -48,7 +48,7 @@ export const FixedPageHeader = ({
         <div
           ref={innerRef}
           className="mx-auto max-w-md px-5 pt-6 pb-2"
-          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}
         >
           {children}
         </div>

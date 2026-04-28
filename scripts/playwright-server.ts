@@ -59,7 +59,9 @@ async function shutdown(exitCode = 0) {
 }
 
 server.listen(port, host, () => {
-  process.stdout.write(`Playwright test server listening on http://${host}:${port}\n`);
+  process.stdout.write(
+    `Playwright test server listening on http://${host}:${port}\n`,
+  );
 });
 
 process.on("SIGINT", () => {

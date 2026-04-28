@@ -13,6 +13,30 @@ import { FixedPageHeader } from "@/components/PageHeader";
 import { Page } from "@/components/Page";
 import { Loader } from "@/components/Loader";
 
+function hasStartedSession(
+  sessionProgress?: WorkoutProgress["sessions"][number],
+): sessionProgress is WorkoutProgress["sessions"][number] {
+  return (
+    sessionProgress !== undefined &&
+    Object.values(sessionProgress.completedExercises).some(Boolean)
+  );
+}
+
+function getSessionMeta(
+  session: Session,
+  sessionProgress?: WorkoutProgress["sessions"][number],
+): string {
+  if (sessionProgress?.completed) {
+    return `Completed on ${formatDate(sessionProgress.date)}`;
+  }
+
+  if (hasStartedSession(sessionProgress)) {
+    return `Started on ${formatDate(sessionProgress.date)}`;
+  }
+
+  return `${session.exercises.length} exercises`;
+}
+
 interface DashboardProps {
   sessions: Session[];
   isLoading: boolean;
@@ -25,13 +49,13 @@ interface DashboardProps {
 }
 
 function getSessionStatus(
+  sessionProgress: WorkoutProgress["sessions"][number] | undefined,
   sessionId: string,
   completedIds: Set<string>,
-  currentSessionId: string | null,
   nextSessionId?: string,
 ): SessionCardStatus {
   if (completedIds.has(sessionId)) return "completed";
-  if (currentSessionId === sessionId) return "current";
+  if (hasStartedSession(sessionProgress)) return "current";
   if (nextSessionId === sessionId) return "next";
   return "default";
 }
@@ -65,7 +89,13 @@ export const Dashboard = ({
     .filter((item) => item.completed)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
-  const nextIdx = sessions.findIndex((s) => !completedIds.has(s.id));
+  const nextIdx = sessions.findIndex((session) => {
+    const sessionProgress = progress.sessions.find(
+      (item) => item.sessionId === session.id,
+    );
+
+    return !completedIds.has(session.id) && !hasStartedSession(sessionProgress);
+  });
   const nextSession = nextIdx !== -1 ? sessions[nextIdx] : null;
 
   const completedCount = completedIds.size;
@@ -80,7 +110,7 @@ export const Dashboard = ({
   const weeks = Array.from({ length: 8 }, (_, i) => i + 1);
 
   return (
-    <>
+    <Page>
       <FixedPageHeader>
         <div className="mb-1 flex items-center justify-between gap-4">
           <Brand />
@@ -99,74 +129,67 @@ export const Dashboard = ({
         <Heading className="mb-1">My program</Heading>
         <Subtitle>8 weeks · 3 sessions/week</Subtitle>
       </FixedPageHeader>
+      {isLoading ? (
+        <Loader centered label="Loading your program" />
+      ) : (
+        <>
+          <ProgressSummary
+            completedCount={completedCount}
+            totalCount={totalCount}
+            progressPct={progressPct}
+            lastCompletedLabel={
+              lastCompleted ? formatDate(lastCompleted.date) : undefined
+            }
+          />
 
-      <Page>
-        {isLoading ? (
-          <Loader centered label="Loading your program" />
-        ) : (
-          <>
-            <ProgressSummary
-              completedCount={completedCount}
-              totalCount={totalCount}
-              progressPct={progressPct}
-              lastCompletedLabel={
-                lastCompleted ? formatDate(lastCompleted.date) : undefined
-              }
-            />
+          {nextSession && (
+            <NextSessionCard session={nextSession} onStart={handleStart} />
+          )}
 
-            {nextSession && (
-              <NextSessionCard session={nextSession} onStart={handleStart} />
-            )}
+          <div className="flex-1 pb-8">
+            <SectionHeading className="mb-3">All sessions</SectionHeading>
 
-            <div className="flex-1 pb-8">
-              <SectionHeading className="mb-3">All sessions</SectionHeading>
+            <div className="flex flex-col gap-6">
+              {weeks.map((week) => {
+                const weekSessions = sessions.filter((s) => s.week === week);
 
-              <div className="flex flex-col gap-6">
-                {weeks.map((week) => {
-                  const weekSessions = sessions.filter((s) => s.week === week);
+                return (
+                  <div key={week}>
+                    <p className="text-text-faint mb-2 text-xs font-semibold tracking-widest uppercase">
+                      Week {week}
+                    </p>
 
-                  return (
-                    <div key={week}>
-                      <p className="text-text-faint mb-2 text-xs font-semibold tracking-widest uppercase">
-                        Week {week}
-                      </p>
+                    <div className="flex flex-col gap-2">
+                      {weekSessions.map((session) => {
+                        const sessionProgress = progress.sessions.find(
+                          (item) => item.sessionId === session.id,
+                        );
+                        const status = getSessionStatus(
+                          sessionProgress,
+                          session.id,
+                          completedIds,
+                          nextSession?.id,
+                        );
 
-                      <div className="flex flex-col gap-2">
-                        {weekSessions.map((session) => {
-                          const sessionProgress = progress.sessions.find(
-                            (item) => item.sessionId === session.id,
-                          );
-                          const status = getSessionStatus(
-                            session.id,
-                            completedIds,
-                            progress.currentSessionId,
-                            nextSession?.id,
-                          );
-
-                          return (
-                            <SessionCard
-                              key={session.id}
-                              day={session.day}
-                              label={session.label}
-                              meta={
-                                sessionProgress?.date
-                                  ? formatDate(sessionProgress.date)
-                                  : `${session.exercises.length} exercises`
-                              }
-                              status={status}
-                              onClick={() => handleStart(session.id)}
-                            />
-                          );
-                        })}
-                      </div>
+                        return (
+                          <SessionCard
+                            key={session.id}
+                            day={session.day}
+                            label={session.label}
+                            meta={getSessionMeta(session, sessionProgress)}
+                            status={status}
+                            onClick={() => handleStart(session.id)}
+                          />
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          </>
-        )}
-      </Page>
-    </>
+          </div>
+        </>
+      )}
+    </Page>
   );
 };

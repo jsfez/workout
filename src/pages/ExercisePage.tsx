@@ -16,7 +16,7 @@ import { Page } from "@/components/Page";
 import { FixedPageHeader } from "@/components/PageHeader";
 import { ColoredEmphase } from "@/components/ColoredEmphase";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { CompletedSwitch } from "@/components/CompletedSwitch";
 import { OtherExerciseCard } from "@/components/OtherExerciceCard";
 import { ExerciseMetaCards } from "../components/ExerciceMetaCards";

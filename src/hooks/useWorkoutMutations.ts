@@ -235,6 +235,9 @@ export function useWorkoutMutations({
       applyProgressOptimisticUpdate((current) =>
         updateSessionProgress(current, sessionId, (sessionProgress) => {
           const session = sessions.find((item) => item.id === sessionId);
+          const hadCompletedExercise = Object.values(
+            sessionProgress.completedExercises,
+          ).some(Boolean);
           const completedExercises = {
             ...sessionProgress.completedExercises,
             [exerciseName]: completed,
@@ -246,7 +249,10 @@ export function useWorkoutMutations({
 
           return {
             ...sessionProgress,
-            date: allCompleted ? nowIso() : sessionProgress.date,
+            date:
+              allCompleted || (!hadCompletedExercise && completed)
+                ? nowIso()
+                : sessionProgress.date,
             completed: allCompleted,
             completedExercises,
           };

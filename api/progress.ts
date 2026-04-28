@@ -48,6 +48,7 @@ type SessionProgressRow = {
     load: { toString(): string } | null;
     completedSets: number;
     completed: boolean;
+    completedAt: Date | null;
     sessionExercise: {
       exercise: {
         name: string;
@@ -55,6 +56,15 @@ type SessionProgressRow = {
     };
   }>;
 };
+
+function getStartedDate(progress: SessionProgressRow): Date {
+  const firstCompletedExerciseAt = progress.exercises
+    .filter((exerciseProgress) => exerciseProgress.completedAt !== null)
+    .map((exerciseProgress) => exerciseProgress.completedAt as Date)
+    .sort((a, b) => a.getTime() - b.getTime())[0];
+
+  return firstCompletedExerciseAt ?? progress.startedAt;
+}
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -130,7 +140,7 @@ function toSessionProgressSnapshot(
     },
     {
       sessionId: progress.session.sourceId,
-      date: (progress.completedAt ?? progress.startedAt).toISOString(),
+      date: (progress.completedAt ?? getStartedDate(progress)).toISOString(),
       loads: {},
       completedSets: {},
       completedExercises: {},
