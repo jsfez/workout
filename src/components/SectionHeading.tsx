@@ -10,7 +10,7 @@ export const SectionHeading = ({
   return (
     <h2
       className={cn(
-        "text-xs font-semibold text-text-subtle uppercase tracking-widest",
+        "text-text-subtle text-xs font-semibold tracking-widest uppercase",
         className,
       )}
       {...props}

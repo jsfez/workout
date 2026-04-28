@@ -31,7 +31,7 @@ const SessionProgress = ({
 }) => {
   return (
     <div className="mt-4">
-      <div className="mb-1.5 flex items-center justify-between text-xs text-text-subtle">
+      <div className="text-text-subtle mb-1.5 flex items-center justify-between text-xs">
         <div>Progress</div>
         <div>
           {completedExercises}/{totalExercises}

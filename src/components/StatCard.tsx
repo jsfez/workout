@@ -1,14 +1,13 @@
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
-const badgeVariants = cva(
-  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all [&>svg]:pointer-events-none [&>svg]:size-3.5",
+const statCardVariants = cva(
+  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-xl border border-transparent py-3 font-medium whitespace-nowrap transition-all [&>svg]:pointer-events-none [&>svg]:size-3.5 flex-1",
   {
     variants: {
       variant: {
-        default: "bg-primary text-white",
+        default: "bg-surface ",
         secondary: "bg-surface-muted text-text-muted",
         destructive: "bg-danger/10 text-danger-foreground",
         outline: "border-border text-text",
@@ -24,24 +23,20 @@ const badgeVariants = cva(
   },
 );
 
-export type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
+export type StatCardVariant = VariantProps<typeof statCardVariants>["variant"];
 
-export const Badge = ({
+export const StatCard = ({
   className,
   variant = "default",
-  asChild = false,
   ...props
-}: React.ComponentProps<"span"> & {
-  variant?: BadgeVariant;
+}: React.ComponentProps<"div"> & {
+  variant?: StatCardVariant;
   asChild?: boolean;
 }) => {
-  const Comp = asChild ? Slot : "span";
-
   return (
-    <Comp
-      data-slot="badge"
+    <div
       data-variant={variant}
-      className={cn(badgeVariants({ variant }), className)}
+      className={cn(statCardVariants({ variant }), className)}
       {...props}
     />
   );

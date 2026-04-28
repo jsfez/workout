@@ -1,8 +1,8 @@
 import { cva } from "class-variance-authority";
 import type { Exercise } from "@/types";
 import { cn } from "@/lib/utils";
-import { Check, ChevronRight, Clock } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { Check, ChevronRight } from "lucide-react";
+import { ExerciseMetaBadges } from "./ExerciseMetaBadges";
 
 const exerciseCardVariants = cva(
   "w-full p-4 rounded-2xl border text-left transition-all active:scale-[0.98]",
@@ -29,20 +29,20 @@ const CardStatusIndicator = ({
   return (
     <div
       className={cn(
-        "w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold",
+        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
         isComplete
           ? "bg-success text-white"
           : "bg-surface-muted text-text-subtle",
       )}
     >
-      {isComplete ? <Check className="w-3.5 h-3.5" /> : index + 1}
+      {isComplete ? <Check className="h-3.5 w-3.5" /> : index + 1}
     </div>
   );
 };
 
 const Badges = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex items-center gap-2 flex-wrap ml-8">{children}</div>
+    <div className="ml-8 flex flex-wrap items-center gap-2">{children}</div>
   );
 };
 
@@ -51,13 +51,11 @@ export const ExerciseCard = ({
   index,
   isComplete,
   onClick,
-  currentLoad,
   lastLoad,
 }: {
   exercise: Exercise;
   index: number;
   isComplete: boolean;
-  currentLoad: string | null;
   lastLoad: string | null;
   onClick: () => void;
 }) => {
@@ -66,41 +64,17 @@ export const ExerciseCard = ({
   return (
     <button onClick={onClick} className={cn(exerciseCardVariants({ state }))}>
       <div className="flex items-center justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex items-center gap-2">
             <CardStatusIndicator isComplete={isComplete} index={index} />
-            <div className="text-sm font-semibold leading-tight">
+            <div className="text-sm leading-tight font-semibold">
               {exercise.name}
             </div>
           </div>
-
-          <Badges>
-            <Badge variant="secondary">
-              {exercise.sets}×{exercise.reps}
-            </Badge>
-            <Badge variant="success">RPE {exercise.rpe}</Badge>
-            <Badge variant="warning">
-              <Clock className="w-3 h-3" />
-              {exercise.rest}
-            </Badge>
-          </Badges>
+          <ExerciseMetaBadges exercise={exercise} lastLoad={lastLoad} />
         </div>
 
-        {currentLoad ? (
-          <div className="flex flex-col items-end gap-1">
-            <span className="text-base font-bold text-success-foreground">
-              {currentLoad} kg
-            </span>
-            <span className="text-xs text-success-emphasis">Current</span>
-          </div>
-        ) : lastLoad ? (
-          <div className="flex flex-col items-end gap-1">
-            <span className="text-base">{lastLoad} kg</span>
-            <span className="text-xs ">Last</span>
-          </div>
-        ) : (
-          <ChevronRight className="shrink-0 size-4 text-text-faint" />
-        )}
+        <ChevronRight className="text-text-faint size-4 shrink-0" />
       </div>
     </button>
   );

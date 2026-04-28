@@ -10,7 +10,7 @@ export const ThemeToggle = ({ isDarkMode, onToggle }: ThemeToggleProps) => {
     <button
       type="button"
       onClick={onToggle}
-      className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-raised text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
+      className="border-border bg-surface-raised text-text-muted hover:bg-surface-hover hover:text-text flex h-9 w-9 items-center justify-center rounded-full border transition-colors"
       aria-label={
         isDarkMode ? "Activer le mode clair" : "Activer le mode sombre"
       }

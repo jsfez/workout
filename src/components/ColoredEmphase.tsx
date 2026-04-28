@@ -10,7 +10,7 @@ export const ColoredEmphase = ({
   return (
     <p
       className={cn(
-        "mb-2 text-xs font-semibold text-primary-light uppercase tracking-widest",
+        "text-primary-light mb-2 text-xs font-semibold tracking-widest uppercase",
         className,
       )}
       {...props}

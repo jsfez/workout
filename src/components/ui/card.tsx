@@ -12,7 +12,7 @@ const Card = ({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-4 overflow-hidden rounded-xl border border-border bg-surface-raised py-4 text-sm text-text data-[size=sm]:gap-3 data-[size=sm]:py-3",
+        "group/card border-border bg-surface-raised text-text flex flex-col gap-4 overflow-hidden rounded-xl border py-4 text-sm data-[size=sm]:gap-3 data-[size=sm]:py-3",
         className,
       )}
       {...props}
@@ -53,7 +53,7 @@ const CardDescription = ({
   return (
     <div
       data-slot="card-description"
-      className={cn("text-sm text-text-muted", className)}
+      className={cn("text-text-muted text-sm", className)}
       {...props}
     />
   );

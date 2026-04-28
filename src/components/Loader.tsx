@@ -41,7 +41,7 @@ export const Loader = ({
     <div
       aria-live="polite"
       className={cn(
-        "inline-flex items-center gap-3 text-primary",
+        "text-primary inline-flex items-center gap-3",
         centered && "flex w-full flex-1 justify-center py-20",
         className,
       )}
@@ -55,7 +55,7 @@ export const Loader = ({
       />
       {label ? (
         <span
-          className={cn("text-sm font-medium text-text-muted", labelClassName)}
+          className={cn("text-text-muted text-sm font-medium", labelClassName)}
         >
           {label}
         </span>

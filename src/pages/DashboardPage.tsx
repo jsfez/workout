@@ -38,8 +38,8 @@ function getSessionStatus(
 
 const Brand = () => (
   <div className="flex items-center gap-2">
-    <Dumbbell className="h-5 w-5 text-primary-light" />
-    <div className="text-xs font-semibold text-primary-light uppercase tracking-widest">
+    <Dumbbell className="text-primary-light h-5 w-5" />
+    <div className="text-primary-light text-xs font-semibold tracking-widest uppercase">
       Workout Tracker
     </div>
   </div>
@@ -87,10 +87,10 @@ export const Dashboard = ({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-surface-raised px-3 text-sm font-semibold text-text transition hover:bg-surface-hover"
+              className="border-border bg-surface-raised text-text hover:bg-surface-hover inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition"
               onClick={onChangeUser}
             >
-              <UserRound className="h-4 w-4 text-primary-light" />
+              <UserRound className="text-primary-light h-4 w-4" />
               {currentUser.name}
             </button>
             <ThemeToggle isDarkMode={isDarkMode} onToggle={onToggleTheme} />
@@ -118,7 +118,7 @@ export const Dashboard = ({
               <NextSessionCard session={nextSession} onStart={handleStart} />
             )}
 
-            <div className="pb-8 flex-1">
+            <div className="flex-1 pb-8">
               <SectionHeading className="mb-3">All sessions</SectionHeading>
 
               <div className="flex flex-col gap-6">
@@ -127,7 +127,7 @@ export const Dashboard = ({
 
                   return (
                     <div key={week}>
-                      <p className="mb-2 text-xs font-semibold text-text-faint uppercase tracking-widest">
+                      <p className="text-text-faint mb-2 text-xs font-semibold tracking-widest uppercase">
                         Week {week}
                       </p>
 

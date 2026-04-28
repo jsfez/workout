@@ -12,7 +12,7 @@ export const BackButton = ({ label, onClick, className }: BackButtonProps) => {
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 text-text-muted transition-colors hover:text-text mb-4",
+        "text-text-muted hover:text-text mb-4 flex items-center gap-2 transition-colors",
         className,
       )}
     >

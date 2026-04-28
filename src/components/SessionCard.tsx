@@ -33,18 +33,18 @@ const SessionStatusIcon = ({
   return (
     <div
       className={cn(
-        "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
+        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
         isCompleted && "bg-success/20",
         isCurrent && "bg-primary/20",
         !isCompleted && !isCurrent && "bg-surface-muted",
       )}
     >
       {isCompleted ? (
-        <CheckCircle2 className="w-5 h-5 text-success-foreground" />
+        <CheckCircle2 className="text-success-foreground h-5 w-5" />
       ) : isCurrent ? (
-        <Clock className="w-5 h-5 text-primary-light" />
+        <Clock className="text-primary-light h-5 w-5" />
       ) : (
-        <span className="text-sm font-bold text-text-subtle">#{day}</span>
+        <span className="text-text-subtle text-sm font-bold">#{day}</span>
       )}
     </div>
   );
@@ -83,12 +83,12 @@ export const SessionCard = ({
           >
             {label}
           </p>
-          <p className="text-xs text-text-subtle">{meta}</p>
+          <p className="text-text-subtle text-xs">{meta}</p>
         </div>
       </div>
       <ChevronRight
         className={cn(
-          "w-4 h-4 shrink-0",
+          "h-4 w-4 shrink-0",
           isCompleted ? "text-text-faint" : "text-text-subtle",
         )}
       />

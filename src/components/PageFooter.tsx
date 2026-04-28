@@ -11,7 +11,7 @@ export const PageFooter = ({
   return (
     <div
       className={cn(
-        "fixed left-0 right-0 bottom-0 bg-background pt-2 shadow",
+        "bg-background fixed right-0 bottom-0 left-0 pt-2 shadow",
         className,
       )}
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}

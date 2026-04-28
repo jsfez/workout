@@ -42,13 +42,13 @@ export const FixedPageHeader = ({
     <>
       <div aria-hidden="true" style={{ height: headerHeight }} />
       <div
-        className={cn("fixed inset-x-0 top-0 z-30 bg-background", className)}
+        className={cn("bg-background fixed inset-x-0 top-0 z-30", className)}
         {...props}
       >
         <div
           ref={innerRef}
-          className="mx-auto max-w-md px-5 pb-4 pt-6"
-          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}
+          className="mx-auto max-w-md px-5 pt-6 pb-2"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}
         >
           {children}
         </div>

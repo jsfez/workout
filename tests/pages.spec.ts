@@ -17,9 +17,7 @@ test("test pages", async ({ page }) => {
   await page.getByRole("button", { name: "Jeremy", exact: false }).click();
   await expectHeadingAndCapture(page, "My program", "dashboard");
 
-  await page
-    .getByRole("button", { name: "WEEK 1 — #1", exact: false })
-    .click();
+  await page.getByRole("button", { name: "WEEK 1 — #1", exact: false }).click();
   await expectHeadingAndCapture(page, "WEEK 1 — #1", "session-week-1-1");
 
   await page

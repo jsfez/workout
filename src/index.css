@@ -59,7 +59,7 @@
     margin: 0;
     padding: 0;
     overscroll-behavior: none;
-    @apply bg-background font-sans text-text antialiased;
+    @apply bg-background text-text font-sans antialiased;
   }
 
   #root {

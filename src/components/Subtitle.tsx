@@ -4,5 +4,5 @@ import { cn } from "@/lib/utils";
 type SubtitleProps = React.HTMLAttributes<HTMLParagraphElement>;
 
 export const Subtitle = ({ className, ...props }: SubtitleProps) => {
-  return <p className={cn("text-sm text-text-muted", className)} {...props} />;
+  return <p className={cn("text-text-muted text-sm", className)} {...props} />;
 };

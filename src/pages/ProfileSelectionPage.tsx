@@ -20,8 +20,8 @@ interface ProfileSelectionPageProps {
 
 const Brand = () => (
   <div className="mb-5 flex items-center gap-2">
-    <Dumbbell className="h-5 w-5 text-primary-light" />
-    <div className="text-xs font-semibold text-primary-light uppercase tracking-widest">
+    <Dumbbell className="text-primary-light h-5 w-5" />
+    <div className="text-primary-light text-xs font-semibold tracking-widest uppercase">
       Workout Tracker
     </div>
   </div>
@@ -74,13 +74,13 @@ export const ProfileSelectionPage = ({
               <button
                 key={user.id}
                 type="button"
-                className="flex min-h-16 items-center gap-3 rounded-xl border border-border bg-surface-raised px-4 text-left transition hover:bg-surface-hover active:scale-[0.99]"
+                className="border-border bg-surface-raised hover:bg-surface-hover flex min-h-16 items-center gap-3 rounded-xl border px-4 text-left transition active:scale-[0.99]"
                 onClick={() => onSelectUser(user)}
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <span className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-xl">
                   <UserRound className="h-5 w-5" />
                 </span>
-                <span className="text-base font-semibold text-text">
+                <span className="text-text text-base font-semibold">
                   {user.name}
                 </span>
               </button>
@@ -93,16 +93,16 @@ export const ProfileSelectionPage = ({
             </CardHeader>
             <CardContent>
               <form className="flex flex-col gap-3" onSubmit={handleCreateUser}>
-                <label className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+                <label className="text-text-faint text-xs font-semibold tracking-widest uppercase">
                   First name
                 </label>
                 <input
-                  className="h-11 rounded-xl border border-border bg-surface px-3 text-base text-text outline-none transition placeholder:text-text-faint focus:border-primary"
+                  className="border-border bg-surface text-text placeholder:text-text-faint focus:border-primary h-11 rounded-xl border px-3 text-base transition outline-none"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   placeholder="New profile"
                 />
-                {error && <p className="text-sm text-danger">{error}</p>}
+                {error && <p className="text-danger text-sm">{error}</p>}
                 <Button
                   className="gap-2"
                   disabled={!name.trim() || isCreating}

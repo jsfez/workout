@@ -109,7 +109,6 @@ const App = () => {
     createUser,
     startSession,
     updateLoad,
-    updateCompletedSets,
     setExerciseCompleted,
     setSessionCompleted,
   } = useWorkoutMutations({
@@ -152,13 +151,6 @@ const App = () => {
       return updateLoad(sessionId, exerciseName, load);
     },
     [updateLoad],
-  );
-
-  const handleUpdateCompletedSets = useCallback(
-    (sessionId: string, exerciseName: string, completedSets: number) => {
-      return updateCompletedSets(sessionId, exerciseName, completedSets);
-    },
-    [updateCompletedSets],
   );
 
   const handleSetExerciseCompleted = useCallback(
@@ -284,7 +276,6 @@ const App = () => {
         }}
         progress={progress}
         onUpdateLoad={handleUpdateLoad}
-        onUpdateCompletedSets={handleUpdateCompletedSets}
         onSetExerciseCompleted={handleSetExerciseCompleted}
       />
     );
