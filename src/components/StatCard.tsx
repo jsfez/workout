@@ -23,7 +23,7 @@ const statCardVariants = cva(
   },
 );
 
-export type StatCardVariant = VariantProps<typeof statCardVariants>["variant"];
+type StatCardVariant = VariantProps<typeof statCardVariants>["variant"];
 
 export const StatCard = ({
   className,
